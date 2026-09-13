@@ -22,7 +22,7 @@ function harness(fetcher=async()=>Response.json({ready:true})){
   const document={querySelector:()=>elements.get('app'),getElementById:id=>elements.get(id),createElement:()=>new Element(),querySelectorAll:()=>elements.get('personas')?.children||[]};
   const timers=new Map();let next=0;const timeout=(f,ms)=>{const id=++next;timers.set(id,{f,ms});return id;};
   class FakeAvatar{constructor(){this.motion=true;}setPersona(){}setState(s){this.state=s;}setMood(){}word(){}}
-  const context=vm.createContext({document,window:{addEventListener(){}},location:{protocol:'https:'},matchMedia:()=>({matches:false}),AvatarStage:FakeAvatar,PERSONAS,demoReply,console,confirm:()=>true,setTimeout:timeout,clearTimeout:id=>timers.delete(id),setInterval(){},fetch:fetcher,AbortController,Blob,URL});
+  const context=vm.createContext({document,window:{addEventListener(){}},location:{protocol:'https:'},matchMedia:()=>({matches:false}),AvatarStage:FakeAvatar,logoUrl:"test-logo.png",PERSONAS,demoReply,console,confirm:()=>true,setTimeout:timeout,clearTimeout:id=>timers.delete(id),setInterval(){},fetch:fetcher,AbortController,Blob,URL});
   const code=fs.readFileSync(new URL('../src/main.js',import.meta.url),'utf8').replace(/^import .*;\n/gm,'');
   vm.runInContext(code,context);
   elements.get('engine').value='demo';

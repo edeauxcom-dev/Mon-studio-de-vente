@@ -1,4 +1,5 @@
 import './style.css';
+import logoUrl from './assets/my-partner-school.png?inline';
 import { AvatarStage } from './avatar.js';
 import { PERSONAS } from './personas.js';
 import { demoReply } from './demo.js';
@@ -6,7 +7,7 @@ import { demoReply } from './demo.js';
 const $=id=>document.getElementById(id);
 const icons={mic:'<svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg>',send:'<svg viewBox="0 0 24 24"><path d="m4 4 17 8-17 8 3-8-3-8ZM7 12h14"/></svg>'};
 document.querySelector('#app').innerHTML=`
-<header class="topbar"><a class="brand" href="./"><span class="brand-mark">m<span>ps</span></span><span>Studio de vente<small>SIMULATIONS IMMERSIVES</small></span></a><div class="top-status"><span class="status-dot"></span> Espace d’entraînement <span class="version">BÊTA 01</span></div></header>
+<header class="topbar"><a class="brand" href="./"><img class="brand-logo" src="${logoUrl}" alt="My Partner School" width="300" height="93"><span class="brand-title">Studio de vente<small>SIMULATIONS IMMERSIVES</small></span></a><div class="top-status"><span class="status-dot"></span> Espace d’entraînement <span class="version">BÊTA 01</span></div></header>
 <main class="layout"><aside class="sidebar"><div class="section-label">VOTRE MISE EN SITUATION</div><h1>Une vraie conversation.<br><em>Un terrain d’essai.</em></h1><p class="intro">Entraînez-vous à découvrir, convaincre et négocier face à un client virtuel.</p>
 <div class="section-label clients-label">01 — CHOISIR SON INTERLOCUTEUR</div><div id="personas" class="personas"></div>
 <div class="brief"><span class="section-label">VOTRE MISSION · TECHNOFLUX</span><h2 id="missionTitle"></h2><p id="mission"></p><details><summary>Consulter le dossier client</summary><div id="dossier"></div></details></div>
