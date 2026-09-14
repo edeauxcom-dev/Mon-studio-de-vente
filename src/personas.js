@@ -7,6 +7,9 @@ export const PERSONAS = [
     "tag": "Difficile · Objection prix",
     "avatarEmoji": "🧑‍💼",
     "greeting": "Delattre, j'écoute. Vous avez dix minutes, allez-y.",
+    "preferredVoiceNames": [
+      "Google français 5 (Natural)"
+    ],
     "voiceGender": "male",
     "pitch": 0.85,
     "voiceNameHints": [
@@ -30,6 +33,9 @@ export const PERSONAS = [
     "tag": "Indécise · Besoin flou",
     "avatarEmoji": "👩‍💼",
     "greeting": "Bonjour... Sophie Vasseur. Je vous écoute, même si je ne sais pas trop ce qu'il nous faut, pour être honnête.",
+    "preferredVoiceNames": [
+      "Chrome OS français 1"
+    ],
     "voiceGender": "female",
     "pitch": 1.25,
     "voiceNameHints": [
@@ -57,6 +63,9 @@ export const PERSONAS = [
     "tag": "Pressé · Direct",
     "avatarEmoji": "🕴️",
     "greeting": "Bensalem. Je vous préviens tout de suite, j'ai cinq minutes montre en main.",
+    "preferredVoiceNames": [
+      "Chrome OS français 5"
+    ],
     "voiceGender": "male",
     "pitch": 0.95,
     "voiceNameHints": [
@@ -69,6 +78,32 @@ export const PERSONAS = [
       "Contexte : Karim gère plusieurs entrepôts et n'a que quelques minutes à accorder, entre deux réunions.",
       "Objectif de l'entretien : aller à l'essentiel, cibler la bonne question, et obtenir une suite concrète rapidement.",
       "Attention : toute lenteur ou question déjà répondue le fait perdre patience — il peut écourter l'entretien."
+    ]
+  },
+  {
+    "id": "claire",
+    "name": "Claire Moreau",
+    "role": "Responsable des achats",
+    "company": "Novalys Industrie",
+    "tag": "Exigeante · Négociation",
+    "avatarEmoji": "👩‍💼",
+    "greeting": "Bonjour, Claire Moreau. Votre offre nous intéresse, mais je souhaite revoir le prix et le délai avant de m’engager.",
+    "preferredVoiceNames": [
+      "Chrome OS français 4"
+    ],
+    "voiceGender": "female",
+    "pitch": 1,
+    "voiceNameHints": [
+      "Audrey",
+      "Amelie",
+      "Amélie",
+      "Julie",
+      "Marie"
+    ],
+    "fiche": [
+      "Contexte : Novalys Industrie renouvelle la filtration de deux lignes de production. Claire compare les conditions commerciales de plusieurs fournisseurs.",
+      "Objectif de l'entretien : découvrir les priorités d’achat, défendre la valeur, négocier des contreparties et formaliser un accord conditionnel.",
+      "Attention : Claire demande une remise de 10 % et un délai plus court. Ne promettez pas de conditions non validées ; recherchez un échange de concessions."
     ]
   }
 ];
