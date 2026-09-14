@@ -2,11 +2,11 @@ export const PERSONAS = [
   {
     "id": "marc",
     "name": "Marc Delattre",
-    "role": "Responsable Maintenance",
-    "company": "Provendex (agroalimentaire)",
+    "role": "Responsable commercial",
+    "company": "Provendex Services",
     "tag": "Difficile · Objection prix",
     "avatarEmoji": "🧑‍💼",
-    "greeting": "Delattre, j'écoute. Vous avez dix minutes, allez-y.",
+    "greeting": "Bonjour. Je cherche une formation pour mes commerciaux, mais votre prix me paraît élevé.",
     "preferredVoiceNames": [
       "Google français 5 (Natural)"
     ],
@@ -20,19 +20,19 @@ export const PERSONAS = [
       "Yannick"
     ],
     "fiche": [
-      "Contexte : Provendex exploite une ligne de production sujette à des pannes récurrentes sur son système de filtration industrielle.",
-      "Objectif de l'entretien : qualifier le besoin réel, argumenter techniquement, traiter l'objection prix, décrocher un prochain pas.",
-      "Attention : Marc est pressé, technique, et va comparer votre offre à un concurrent moins cher."
+      "Contexte : Une équipe de six commerciaux doit mieux défendre ses offres. Marc compare deux formations.",
+      "Objectif de l'entretien : Comprendre les critères de choix, relier la valeur au besoin et traiter une comparaison de prix.",
+      "Attention : Marc évoquera une formation à 1 500 € HT ; son périmètre reste à clarifier."
     ]
   },
   {
     "id": "sophie",
     "name": "Sophie Vasseur",
-    "role": "Directrice Technique",
-    "company": "Atelier Meunier (mécanique de précision)",
+    "role": "Responsable d’équipe commerciale",
+    "company": "Atelier Meunier Services",
     "tag": "Indécise · Besoin flou",
     "avatarEmoji": "👩‍💼",
-    "greeting": "Bonjour... Sophie Vasseur. Je vous écoute, même si je ne sais pas trop ce qu'il nous faut, pour être honnête.",
+    "greeting": "Bonjour. Je voudrais aider mon équipe à mieux vendre, mais je ne sais pas encore quelle formation choisir.",
     "preferredVoiceNames": [
       "Chrome OS français 1"
     ],
@@ -50,19 +50,19 @@ export const PERSONAS = [
       "Charlotte"
     ],
     "fiche": [
-      "Contexte : l'Atelier Meunier constate une baisse de rendement sur une ligne d'usinage, sans en connaître la cause précise.",
-      "Objectif de l'entretien : aider Sophie à clarifier son besoin réel avant de proposer une solution, puis enchaîner sur une suite adaptée.",
-      "Attention : pas d'objection prix ici, mais un pitch trop rapide la perd — elle doute que ce soit le bon sujet."
+      "Contexte : Sophie encadre cinq commerciaux et formule une demande de formation encore vague.",
+      "Objectif de l'entretien : Faire préciser une difficulté commerciale et le résultat attendu avant de présenter l’offre.",
+      "Attention : Aucun diagnostic technique attendu. Posez des questions sur les situations de vente et reformulez."
     ]
   },
   {
     "id": "karim",
     "name": "Karim Bensalem",
-    "role": "Directeur d'Exploitation",
-    "company": "Groupe Lorval (logistique)",
+    "role": "Directeur commercial",
+    "company": "Groupe Lorval",
     "tag": "Pressé · Direct",
     "avatarEmoji": "🕴️",
-    "greeting": "Bensalem. Je vous préviens tout de suite, j'ai cinq minutes montre en main.",
+    "greeting": "Bonjour. J’ai cinq minutes : expliquez-moi en quoi cette formation peut être utile à mon équipe.",
     "preferredVoiceNames": [
       "Chrome OS français 5"
     ],
@@ -75,19 +75,19 @@ export const PERSONAS = [
       "Paul"
     ],
     "fiche": [
-      "Contexte : Karim gère plusieurs entrepôts et n'a que quelques minutes à accorder, entre deux réunions.",
-      "Objectif de l'entretien : aller à l'essentiel, cibler la bonne question, et obtenir une suite concrète rapidement.",
-      "Attention : toute lenteur ou question déjà répondue le fait perdre patience — il peut écourter l'entretien."
+      "Contexte : Karim cherche une action courte et concrète pour ses huit commerciaux.",
+      "Objectif de l'entretien : Découvrir rapidement une priorité et obtenir un second rendez-vous ciblé.",
+      "Attention : Il apprécie la concision. Ne promettez pas une hausse chiffrée des ventes."
     ]
   },
   {
     "id": "claire",
     "name": "Claire Moreau",
     "role": "Responsable des achats",
-    "company": "Novalys Industrie",
+    "company": "Novalys Services",
     "tag": "Exigeante · Négociation",
     "avatarEmoji": "👩‍💼",
-    "greeting": "Bonjour, Claire Moreau. Votre offre nous intéresse, mais je souhaite revoir le prix et le délai avant de m’engager.",
+    "greeting": "Bonjour. Votre formation nous intéresse. Je souhaite une remise de dix pour cent et une date dans deux semaines.",
     "preferredVoiceNames": [
       "Chrome OS français 4"
     ],
@@ -101,9 +101,9 @@ export const PERSONAS = [
       "Marie"
     ],
     "fiche": [
-      "Contexte : Novalys Industrie renouvelle la filtration de deux lignes de production. Claire compare les conditions commerciales de plusieurs fournisseurs.",
-      "Objectif de l'entretien : découvrir les priorités d’achat, défendre la valeur, négocier des contreparties et formaliser un accord conditionnel.",
-      "Attention : Claire demande une remise de 10 % et un délai plus court. Ne promettez pas de conditions non validées ; recherchez un échange de concessions."
+      "Contexte : Claire négocie l’achat de formations pour une équipe commerciale.",
+      "Objectif de l'entretien : Explorer les priorités, négocier dans les limites de la fiche et formaliser une proposition conditionnelle.",
+      "Attention : Une demande initiale du client n’est pas une condition autorisée. Relisez les limites de remise et de délai."
     ]
   }
 ];

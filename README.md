@@ -1,47 +1,33 @@
-# Studio de vente — version illustrée, 4 profils
+# Studio de vente — pilote commercial et voix Android
 
-## Mettre à jour le dépôt existant
+## Mettre en ligne
+Décompresser MPS-STUDIO-VENTE-PILOTE-V3.zip. Dans GitHub / Mon-studio-de-vente / Code / Add file / Upload files, déposer tout le CONTENU du dossier à la racine (src, server, tests, scripts et fichiers associés). Valider Commit changes sur main. Attendre le nouveau déploiement Cloudflare puis actualiser le site.
 
-1. Décompressez MPS-STUDIO-4-PROFILS-GITHUB.zip.
-2. Ouvrez le dépôt Mon-studio-de-vente, onglet Code, à la racine.
-3. Add file → Upload files : glissez le CONTENU du dossier décompressé (les dossiers src, server, tests, scripts et les fichiers à leur côté). Ne glissez ni le ZIP ni son dossier enveloppe. Ne supprimez pas les dossiers existants.
-4. Commit changes sur main. Cloudflare doit démarrer une nouvelle construction si la connexion GitHub est active.
-5. Attendez la réussite du nouveau déploiement, puis ouvrez le site et actualisez la page.
+Configuration conservée : Worker mon-studio-de-vente ; construction pnpm run test && pnpm run build ; déploiement pnpm exec wrangler deploy ; racine /. Les clés restent dans Cloudflare. Aucun secret à déposer dans GitHub.
 
-Cloudflare : nom mon-studio-de-vente ; commande de construction pnpm run test && pnpm run build ; commande de déploiement pnpm exec wrangler deploy ; racine /.
-Les secrets ANTHROPIC_API_KEY et ACCESS_CODE se règlent dans Cloudflare, jamais dans GitHub. Les conserver s’ils sont déjà configurés. GitHub stocke le code ; Cloudflare héberge le simulateur et son API. GitHub Pages seul ne permet pas le mode IA.
+## Objet de l’essai
+Les apprenants vendent une offre fictive de formation CAP VENTE, sans expertise industrielle ni diagnostic technique. La fiche commerciale est ouverte avant l’entretien et reste consultable. Préparation non chronométrée ; 5 à 8 minutes conseillées, 5 pour Karim, aucune coupure automatique. Obtenir une prochaine étape pertinente suffit : aucune signature ni résolution complète du problème n’est exigée.
 
-## Faire essayer aux formateurs
+Offre : une journée de 6 heures à distance, 4 à 8 participants, questionnaire préparatoire, entraînements, fiche méthode et suivi collectif de 45 minutes deux semaines après. Prix : 1 800 € HT par groupe ; délai usuel à partir de quatre semaines. Maximum 5 % contre deux groupes fermes : 1 710 € HT par groupe. Date rapprochée à vérifier. Aucun résultat de vente garanti.
 
-Ouvrir https://mon-studio-de-vente.edeaux-com.workers.dev/ après le déploiement.
+- Marc : comparaison de prix et défense de la valeur.
+- Sophie : clarification du besoin avant de présenter l’offre.
+- Karim : argumentation ciblée et prochaine étape en temps court.
+- Claire : contreparties, marge autorisée et date à confirmer.
 
-- Choisir Marc (objection prix), Sophie (besoin flou), Karim (concision) ou Claire (négociation avec contreparties).
-- Lire la mission et le dossier client.
-- Choisir une voix parmi celles proposées par le navigateur. La préférence est locale à chaque navigateur et personnage ; les voix ne sont pas distribuées aux autres postes.
-- Sélectionner le mode. Sans clé : répliques prédéfinies réactives, aucune note. Avec IA : code de session requis, réponses libres et débriefing sur cinq critères.
-- Commencer l’entretien, répondre au clavier ou au micro si disponible. Le clavier reste utilisable sans reconnaissance vocale.
-- Terminer et débriefer, puis télécharger la transcription si utile. La transcription peut contenir les propos saisis : ne pas y mettre d’informations confidentielles lors de ces essais.
+La fiche est partagée avec le moteur IA et le débriefing pour éviter des exigences hors contexte. Les détails de motivation du client ne sont pas tous révélés à l’apprenant au départ.
 
-## Scénario de Claire
+## Voix, notamment sur Android
+Seules les voix déclarées fr-FR sont proposées. Les voix fr-CA sont exclues, y compris une ancienne sélection mémorisée. Une voix générique ne permet pas de connaître son genre : elle n’est pas sélectionnée automatiquement.
+Sur ordinateur, les quatre préférences validées sont conservées lorsqu’elles sont disponibles : Karim Chrome OS français 5 ; Sophie Chrome OS français 1 ; Marc Google français 5 (Natural) ; Claire Chrome OS français 4.
+Sur Android, ces voix numérotées ne sont PAS automatiquement réputées équivalentes : une voix connue correspondant au profil est recherchée. À défaut, aucune voix n’est lancée automatiquement. Choisir une voix dans la liste, utiliser Écouter un essai, puis conserver le choix ou poursuivre en texte. La préférence manuelle est mémorisée par personnage dans ce navigateur. Le navigateur ne garantit ni le genre ni l’accent réel des voix : l’écoute sur le poste reste nécessaire.
 
-Claire achète pour deux lignes de production. Elle demande 10 % de remise et quatre semaines de délai au lieu de six. L’objectif est de découvrir ses priorités, rechercher des concessions réciproques et vérifier la faisabilité avant de formaliser un accord conditionnel. Le débriefing IA évalue spécifiquement la négociation et les contreparties. Le dossier apprenant ne dévoile pas toutes les marges internes du personnage.
+## Déroulement du pilote
+1. Lire la fiche, choisir un client, essayer une voix.
+2. Sans clé : répliques prédéfinies basées sur des règles simples, sans note. Ce mode valide surtout interface et déroulement, pas la pertinence d’un dialogue IA libre.
+3. Mode IA : ANTHROPIC_API_KEY et ACCESS_CODE requis dans Cloudflare. Donner uniquement le code de session aux formateurs. Les appels Anthropic sont payants.
+4. Mener l’entretien au clavier ou au micro disponible. Terminer et exporter la transcription et le débriefing.
+5. Le formateur compare le débriefing avec les propos réels, en vérifiant le respect de la fiche, la pertinence commerciale et la cohérence des réactions.
 
-## Vérifications recommandées pendant le test formateur
-
-Essayer une question de découverte, une réponse peu pertinente et une proposition de prochaine étape. Vérifier la pertinence de la réplique, l’expression et la continuité du dialogue. Pour Claire, comparer un rabais sans contrepartie à une proposition conditionnelle construite. Essayer arrêt de la voix, nouvelle session et export de transcription. Évaluer les retours IA comme une aide pédagogique, non comme une certification.
-
-## État de livraison
-
-29 tests automatiques réussis : quatre parcours de session, scénario Claire, expressions, choix des voix, protections et validation serveur. Compilation de production et vérification de déploiement Cloudflare sans publication réussies. Aucun appel réel payant à Anthropic effectué pendant la vérification ; aucun déploiement distant réalisé. Le rendu dans un navigateur réel, l’écoute des voix et le microphone restent à valider sur les postes des formateurs.
-
-Les expressions sont des illustrations sélectionnées par le moteur de dialogue, avec une respiration visuelle légère ; il ne s’agit pas d’une vidéo ni d’une synchronisation labiale. Les modes sans clé et IA restent explicitement distingués dans l’interface.
-
-
-## Voix attribuées par défaut
-
-- Karim : Chrome OS français 5 (fr-FR).
-- Sophie : Chrome OS français 1 (fr-FR).
-- Marc : Google français 5 (Natural) (fr-FR).
-- Claire : Chrome OS français 4 (fr-FR).
-
-Ces voix sont sélectionnées en mode Automatique lorsqu’elles sont accessibles au navigateur. Un choix manuel mémorisé reste prioritaire : sélectionner Automatique pour retrouver la voix attribuée. Sinon, une voix française connue correspondant au personnage est recherchée, puis une voix française disponible. Le genre ne peut pas être garanti si aucune voix connue n’est proposée par le navigateur. Chrome sur ordinateur est recommandé pour cet essai, sans garantie de catalogue identique entre appareils.
+## Vérifications de livraison
+33 tests automatiques passent : parcours des quatre clients, conditions de Claire, fiche avant chronomètre, scénarios et évaluation partageant la fiche, sélection vocale simulée sur Android, exclusion fr-CA, expressions et validations serveur. Compilation et déploiement Cloudflare à blanc réussis. Aucun appel Anthropic payant ni publication distante effectué. L’écoute sur un vrai Android et la fiabilité pédagogique des retours IA nécessitent encore un essai formateur en conditions réelles.

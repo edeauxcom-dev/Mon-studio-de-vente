@@ -1,3 +1,4 @@
+import { OFFER } from './offer.js';
 import './style.css';
 import logoUrl from './assets/my-partner-school.png?inline';
 import { AvatarStage } from './avatar.js';
@@ -8,18 +9,18 @@ const $=id=>document.getElementById(id);
 const icons={mic:'<svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg>',send:'<svg viewBox="0 0 24 24"><path d="m4 4 17 8-17 8 3-8-3-8ZM7 12h14"/></svg>'};
 document.querySelector('#app').innerHTML=`
 <header class="topbar"><a class="brand" href="./"><img class="brand-logo" src="${logoUrl}" alt="My Partner School" width="300" height="93"><span class="brand-title">Studio de vente<small>SIMULATIONS IMMERSIVES</small></span></a><div class="top-status"><span class="status-dot"></span> Espace d’entraînement <span class="version">BÊTA 02</span></div></header>
-<div class="browser-advice"><strong>Google Chrome recommandé sur ordinateur pour cet essai.</strong> Pour retrouver les voix choisies par votre formateur, ouvrez le studio dans Chrome. Les voix disponibles peuvent varier selon votre appareil ; une voix de remplacement est utilisée si nécessaire.</div>
+<div class="browser-advice"><strong>Google Chrome recommandé sur ordinateur pour cet essai.</strong> Les voix varient selon l’appareil, y compris dans Chrome sur Android. Écoutez un essai avant l’entretien. Si aucune voix adaptée n’est reconnue, continuez en texte ou choisissez une voix après écoute.</div>
 <main class="layout"><aside class="sidebar"><div class="section-label">VOTRE MISE EN SITUATION</div><h1>Une vraie conversation.<br><em>Un terrain d’essai.</em></h1><p class="intro">Entraînez-vous à découvrir, convaincre et négocier face à un client virtuel.</p>
 <div class="section-label clients-label">01 — CHOISIR SON INTERLOCUTEUR</div><div id="personas" class="personas"></div>
-<div class="brief"><span class="section-label">VOTRE MISSION · TECHNOFLUX</span><h2 id="missionTitle"></h2><p id="mission"></p><details><summary>Consulter le dossier client</summary><div id="dossier"></div></details></div>
-<div class="session-settings"><label for="engine">Mode de simulation</label><select id="engine"><option value="demo">Démonstration · sans clé</option value="ai">Entretien avec l’IA</option></select><p id="engineNote">Réponses prédéfinies pour essayer les avatars. Pas d’évaluation pédagogique.</p><div id="accessWrap" hidden><label for="accessCode">Code de session fourni par le formateur</label><input id="accessCode" type="password" autocomplete="off" maxlength="128" placeholder="Votre code de session"></div></div>
-<div class="sidebar-foot">Filtration industrielle · Vente B2B<br><span>4 clients · 4 compétences à travailler</span></div></aside>
+<div class="brief"><span class="section-label">VOTRE MISSION · CAP VENTE</span><h2 id="missionTitle"></h2><p id="mission"></p><details><summary>Consulter le dossier client</summary><div id="dossier"></div></details></div>
+<div class="offer-prep"><span class="section-label">AVANT DE COMMENCER</span><p>Préparation libre, hors chronomètre. Entretien conseillé : 5 à 8 minutes. Objectif : une prochaine étape, pas une résolution technique.</p><details open><summary>Votre fiche commerciale · à garder sous les yeux</summary><div id="offerSheet"></div></details></div><div class="session-settings"><label for="engine">Mode de simulation</label><select id="engine"><option value="demo">Démonstration · sans clé</option value="ai">Entretien avec l’IA</option></select><p id="engineNote">Réponses prédéfinies pour essayer les avatars. Pas d’évaluation pédagogique.</p><div id="accessWrap" hidden><label for="accessCode">Code de session fourni par le formateur</label><input id="accessCode" type="password" autocomplete="off" maxlength="128" placeholder="Votre code de session"></div></div>
+<div class="sidebar-foot">Solutions de formation · Vente B2B<br><span>4 clients · 4 compétences à travailler</span></div></aside>
 <section class="workspace" aria-label="Entretien"><div class="workspace-heading"><div><span class="section-label">02 — À VOUS DE JOUER</span><h2>Face à votre client</h2></div><button id="reset" class="text-button">Nouvelle session ↗</button></div>
 <div class="stage-shell"><div id="stage"></div><div id="graphicsError" hidden>Le portrait n’est pas disponible dans ce navigateur. L’entretien reste accessible en texte.</div><div class="stage-top"><span id="modeBadge" class="glass-badge">DÉMONSTRATION</span><button id="motion" class="glass-button" aria-pressed="true">Mouvements : oui</button></div><div class="stage-bottom"><div><div class="name-line"><span class="live-dot"></span><h3 id="clientName"></h3></div><p id="clientRole"></p></div><span id="stateBadge" role="status">Prêt à vous recevoir</span></div><div id="subtitle" class="subtitle" hidden></div></div>
 <div class="session-strip"><span id="turns">0 échange</span><div class="mood-wrap"><span>Climat</span><meter id="mood" min="0" max="100" value="50" aria-label="Climat de l’entretien"></meter><span id="moodLabel">Neutre</span></div><span id="timer">00:00</span></div>
 <div id="notice" class="notice" role="status">Commencez la session : votre client prendra la parole.</div>
 <div class="conversation-head"><span class="section-label">FIL DE L’ENTRETIEN</span><label><input id="voice" type="checkbox" checked> Voix du client</label><label><input id="handsfree" type="checkbox"> Mains libres</label></div>
-<div class="voice-settings"><label for="voiceChoice">Voix de ce personnage</label><select id="voiceChoice" aria-describedby="voiceInfo"></select><small id="voiceInfo" role="status"></small></div>
+<div class="voice-settings"><label for="voiceChoice">Voix de ce personnage</label><select id="voiceChoice" aria-describedby="voiceInfo"></select><button type="button" id="testVoice" class="secondary">Écouter un essai</button><small id="voiceInfo" role="status"></small></div>
 <div id="messages" class="messages" role="log" aria-label="Transcription de l’entretien" aria-live="polite"><p class="empty">Votre conversation s’affichera ici.</p></div>
 <form id="composer" class="composer"><button type="button" id="mic" title="Prendre la parole" aria-label="Prendre la parole au micro" disabled>${icons.mic}</button><label class="sr-only" for="input">Votre réplique</label><textarea id="input" rows="2" maxlength="4000" placeholder="Posez une question à votre client…" disabled></textarea><button id="send" type="submit" title="Envoyer" aria-label="Envoyer la réplique" disabled>${icons.send}</button></form>
 <div class="bottom-actions"><span id="voiceHelp">Micro facultatif · Vous pouvez aussi écrire.</span><button id="start" class="primary">Commencer l’entretien <span>→</span></button><button id="interrupt" class="secondary" hidden>Interrompre la voix</button><button id="finish" class="secondary" hidden>Terminer et débriefer</button></div>
@@ -27,6 +28,7 @@ document.querySelector('#app').innerHTML=`
 <footer>Client virtuel animé · Expressions illustrées · Voix sans synchronisation labiale · Les échanges IA sont transmis à Anthropic. Aucun enregistrement audio n’est stocké par l’application.</footer>
 <dialog id="results"><div class="results-top"><span class="section-label">03 — PRENDRE DU RECUL</span><button id="closeResults" aria-label="Fermer le débriefing">×</button></div><h2 id="resultTitle">Votre débriefing</h2><p id="resultNote"></p><div id="scores" class="scores"></div><div id="feedback"></div><div class="dialog-actions"><button id="export" class="secondary">Télécharger l’entretien</button><button id="retryEval" class="primary" hidden>Réessayer l’analyse</button><button id="restart" class="primary">Recommencer</button></div></dialog>`;
 
+$('offerSheet').textContent=OFFER;
 let selected=PERSONAS[0],avatar=null,active=false,busy=false,ended=false,history=[],mood=50,generation=0,requestController=null,startedAt=0,evaluation=null;
 let speaking=false,recognizing=false,recognition=null,utterance=null,recognitionGeneration=0,autoTimer=null,speechTimer=null,ready=false;
 try{avatar=new AvatarStage($('stage'),selected.id);}catch(e){$('graphicsError').hidden=false;console.warn('Portrait indisponible',e);}
@@ -59,18 +61,20 @@ PERSONAS.forEach((p,i)=>{const b=document.createElement('button');b.className='p
 let voiceChoices={};
 try{const saved=JSON.parse(localStorage.getItem('mps-profile-voices-v1')||'{}');if(saved&&typeof saved==='object'&&!Array.isArray(saved))voiceChoices=saved;}catch{}
 const voiceKey=v=>JSON.stringify([v.voiceURI,v.name,v.lang]);
-function refreshVoices(){const menu=$('voiceChoice');menu.replaceChildren();const voices=window.speechSynthesis?.getVoices()||[];const add=(value,text)=>{const o=document.createElement('option');o.value=value;o.textContent=text;menu.append(o);};add('','Automatique · voix du personnage');[...voices].sort((a,b)=>Number(b.lang.startsWith('fr'))-Number(a.lang.startsWith('fr'))||a.name.localeCompare(b.name,'fr')).forEach(v=>add(voiceKey(v),v.name+' · '+v.lang+(v.localService?' · appareil':' · en ligne')));const saved=voiceChoices[selected.id];const missing=saved&&!voices.some(v=>voiceKey(v)===saved);if(missing)add(saved,'Voix mémorisée indisponible · remplacement automatique');menu.value=saved||'';menu.disabled=!window.speechSynthesis;$('voiceInfo').textContent=!window.speechSynthesis?'Voix indisponible dans ce navigateur.':missing?'La voix mémorisée n’est pas disponible ici.':voices.length+' voix accessibles · préférence par personnage sur ce navigateur.';}
+function refreshVoices(){const menu=$('voiceChoice');menu.replaceChildren();const voices=(window.speechSynthesis?.getVoices()||[]).filter(v=>v.lang?.toLowerCase()==='fr-fr');const add=(value,text)=>{const o=document.createElement('option');o.value=value;o.textContent=text;menu.append(o);};add('','Automatique · voix du personnage');[...voices].sort((a,b)=>Number(b.lang.startsWith('fr'))-Number(a.lang.startsWith('fr'))||a.name.localeCompare(b.name,'fr')).forEach(v=>add(voiceKey(v),v.name+' · '+v.lang+(v.localService?' · appareil':' · en ligne')));const saved=voiceChoices[selected.id];const missing=saved&&!voices.some(v=>voiceKey(v)===saved);if(missing)add(saved,'Voix mémorisée indisponible · choisissez une voix');menu.value=saved||'';menu.disabled=!window.speechSynthesis;$('voiceInfo').textContent=!window.speechSynthesis?'Voix indisponible dans ce navigateur.':missing?'La voix mémorisée n’est pas disponible ici.':chooseVoice()?voices.length+' voix de France · écoutez un essai pour valider le timbre.':'Aucune voix adaptée reconnue automatiquement. Choisissez et écoutez une voix de France, ou poursuivez en texte.';}
 function chooseVoice(){
- const voices=window.speechSynthesis?.getVoices()||[];
- const french=voices.filter(v=>v.lang?.toLowerCase().startsWith('fr'));
+ const voices=(window.speechSynthesis?.getVoices()||[]).filter(v=>v.lang?.toLowerCase()==='fr-fr');
+ const french=voices;
+ const android=typeof navigator!=='undefined'&&/Android/i.test(navigator.userAgent);
  const normalize=name=>name.normalize('NFC').trim().toLowerCase();
  const manual=voices.find(v=>voiceKey(v)===voiceChoices[selected.id]);
  // Exact names are assigned by the trainer after listening; numbered Google voices have no gender metadata.
- const preferred=(selected.preferredVoiceNames||[]).map(name=>french.find(v=>normalize(v.name)===normalize(name))).find(Boolean);
- const known=french.filter(v=>selected.voiceNameHints.some(h=>normalize(v.name).includes(normalize(h))));
+ const preferred=(!android?(selected.preferredVoiceNames||[]):[]).map(name=>french.find(v=>normalize(v.name)===normalize(name))).find(Boolean);
+ const known=french.filter(v=>selected.voiceNameHints.some(h=>normalize(v.name).split(/[^a-zà-ÿ]+/).includes(normalize(h))));
  const fallback=known.find(v=>/premium|enhanced|améliorée|natural/i.test(v.name))||known[0];
- return manual||preferred||fallback||french.find(v=>v.default)||french[0]||null;
+ return manual||preferred||fallback||null;
 }
+$('testVoice').onclick=()=>{cancelVoice();const voice=chooseVoice();if(!voice){notify('Choisissez une voix dans la liste pour écouter un essai.',true);return;}const u=new SpeechSynthesisUtterance('Bonjour, je suis '+selected.name+'. Je vous écoute. Quelle solution souhaitez-vous me proposer ?');u.voice=voice;u.lang='fr-FR';u.rate=.98;u.pitch=1;u.onerror=()=>notify('Cette voix ne peut pas être lue. Essayez une autre voix ou continuez en texte.',true);window.speechSynthesis.speak(u);};
 $('voiceChoice').onchange=()=>{cancelVoice();voiceChoices[selected.id]=$('voiceChoice').value;try{localStorage.setItem('mps-profile-voices-v1',JSON.stringify(voiceChoices));}catch{}refreshVoices();notify('Voix choisie. Elle sera utilisée à la prochaine réplique du client.');};
 window.speechSynthesis?.addEventListener('voiceschanged',refreshVoices);
 window.addEventListener('focus',refreshVoices);
@@ -86,7 +90,7 @@ function speak(text){
   cancelVoice();$('subtitle').textContent=text;$('subtitle').hidden=false;
   if(!$('voice').checked||!window.speechSynthesis){state('idle','À vous de parler');scheduleListening();return;}
   const token=generation;const u=new SpeechSynthesisUtterance(text);utterance=u;u.lang='fr-FR';u.rate=.98;u.pitch=1;
-  u.voice=chooseVoice();if(u.voice)u.lang=u.voice.lang;
+  u.voice=chooseVoice();if(!u.voice){utterance=null;state('idle','Réponse disponible en texte');refreshVoices();notify('Aucune voix adaptée reconnue : choisissez une voix de France après écoute, ou poursuivez au clavier.');return;}u.lang=u.voice.lang;
   const done=(error=false)=>{if(token!==generation||utterance!==u)return;clearTimeout(speechTimer);utterance=null;speaking=false;state('idle','À vous de parler');controls();if(error)notify('La voix est indisponible. La réponse reste lisible ; vous pouvez continuer en texte.',true);else scheduleListening();};
   u.onstart=()=>{if(token!==generation||utterance!==u)return;speaking=true;state('speaking','Votre client parle');controls();};
   u.onboundary=()=>avatar?.word();u.onend=()=>done();u.onerror=()=>done(true);

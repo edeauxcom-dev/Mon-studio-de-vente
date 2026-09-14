@@ -4,10 +4,11 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import {OFFER} from '../src/offer.js';
 import {PERSONAS} from '../src/personas.js';
 import {demoReply} from '../src/demo.js';
 
-function harness(fetcher=async()=>Response.json({ready:true}),speech=null){
+function harness(fetcher=async()=>Response.json({ready:true}),speech=null,userAgent='Desktop'){
   const elements=new Map();
   class Element{
     constructor(){this.children=[];this.value='';this.hidden=false;this.disabled=false;this.checked=false;this.dataset={};this.textContent='';this.style={};this.classList={toggle(){},add(){},remove(){}};}
@@ -22,7 +23,7 @@ function harness(fetcher=async()=>Response.json({ready:true}),speech=null){
   const document={querySelector:()=>elements.get('app'),getElementById:id=>elements.get(id),createElement:()=>new Element(),querySelectorAll:()=>elements.get('personas')?.children||[]};
   const timers=new Map();let next=0;const timeout=(f,ms)=>{const id=++next;timers.set(id,{f,ms});return id;};
   class FakeAvatar{constructor(){this.motion=true;}setPersona(){}setState(s){this.state=s;}setMood(){}word(){}}
-  const context=vm.createContext({document,window:{addEventListener(){},speechSynthesis:speech},SpeechSynthesisUtterance:function(text){this.text=text;},localStorage:{getItem(){return null;},setItem(){}},location:{protocol:'https:'},matchMedia:()=>({matches:false}),AvatarStage:FakeAvatar,logoUrl:"test-logo.png",PERSONAS,demoReply,console,confirm:()=>true,setTimeout:timeout,clearTimeout:id=>timers.delete(id),setInterval(){},fetch:fetcher,AbortController,Blob,URL});
+  const context=vm.createContext({navigator:{userAgent},document,window:{addEventListener(){},speechSynthesis:speech},SpeechSynthesisUtterance:function(text){this.text=text;},localStorage:{getItem(){return null;},setItem(){}},location:{protocol:'https:'},matchMedia:()=>({matches:false}),AvatarStage:FakeAvatar,logoUrl:"test-logo.png",OFFER,PERSONAS,demoReply,console,confirm:()=>true,setTimeout:timeout,clearTimeout:id=>timers.delete(id),setInterval(){},fetch:fetcher,AbortController,Blob,URL});
   const code=fs.readFileSync(new URL('../src/main.js',import.meta.url),'utf8').replace(/^import .*;\n/gm,'');
   vm.runInContext(code,context);
   elements.get('engine').value='demo';
@@ -31,7 +32,7 @@ function harness(fetcher=async()=>Response.json({ready:true}),speech=null){
 test('une session démo produit un dialogue, sans note pédagogique inventée',async()=>{
   const h=harness();h.get('start').click();assert.equal(h.run('active'),true);assert.equal(h.run('history.length'),1);
   h.get('input').value='Quelles sont vos pannes ?';const sent=h.run('send()');assert.equal(h.run('busy'),true);h.tick(650);await sent;
-  assert.equal(h.run('history.length'),3);assert.match(h.run('history[2].content'),/arrêt/);assert.equal(h.get('input').value,'');
+  assert.equal(h.run('history.length'),3);assert.match(h.run('history[2].content'),/commerciaux/);assert.equal(h.get('input').value,'');
   await h.run('finish()');assert.match(h.get('resultNote').textContent,/ne produit pas de note/);assert.equal(h.get('scores').children.length,0);
 });
 test('double envoi évité pendant une réponse',async()=>{const h=harness();h.run('start()');h.get('input').value='Bonjour';const sent=h.run('send()');await h.run('send()');h.tick(650);await sent;assert.equal(h.run('history.length'),3);});
@@ -42,5 +43,8 @@ test('changer de client met à jour sa mission et le dossier',()=>{const h=harne
 test('sans code le mode IA ne démarre pas',()=>{const h=harness();h.get('engine').value='ai';h.run('start()');assert.equal(h.run('active'),false);assert.match(h.get('notice').textContent,/code de session/);});
 test('les quatre profils jouent jusqu’au débriefing en mode sans clé',async()=>{for(const id of ['marc','sophie','karim','claire']){const h=harness();h.run(`selectPersona(PERSONAS.find(p=>p.id==='${id}'))`);h.run('start()');for(const text of ['Quelle est votre priorité ?','Je propose une vérification avec notre production.','Quel volume en contrepartie ?','Récapitulons notre accord conditionnel.']){h.get('input').value=text;const sent=h.run('send()');h.tick(650);await sent;}assert.equal(h.run('history.length'),9);assert.ok(h.run('history.every(m=>typeof m.content==="string"&&m.content.length>0)'));await h.run('finish()');assert.equal(h.run('ended'),true);assert.equal(h.get('scores').children.length,0);}});
 
-test('voix choisie par profil, liste tardive et remplacement si indisponible',()=>{let voices=[],spoken;const speech={getVoices:()=>voices,addEventListener(){},cancel(){},speak:u=>{spoken=u}};const h=harness(undefined,speech);voices=[{voiceURI:'a',name:'Audrey',lang:'fr-FR',localService:true},{voiceURI:'b',name:'English',lang:'en-US',localService:true}];h.run('refreshVoices()');assert.equal(h.get('voiceChoice').children.length,3);h.get('voiceChoice').value=JSON.stringify(['b','English','en-US']);h.get('voiceChoice').onchange();h.get('voice').checked=true;h.run('speak("Bonjour")');assert.equal(spoken.voice.name,'English');assert.equal(spoken.lang,'en-US');h.run('selectPersona(PERSONAS[3])');h.run('speak("Bonjour")');assert.equal(spoken.voice.name,'Audrey');voices=[];h.run('speak("Bonjour")');assert.equal(spoken.voice,null);});
+test('voix choisie par profil, liste tardive et remplacement si indisponible',()=>{let voices=[],spoken;const speech={getVoices:()=>voices,addEventListener(){},cancel(){},speak:u=>{spoken=u}};const h=harness(undefined,speech);voices=[{voiceURI:'a',name:'Audrey',lang:'fr-FR',localService:true},{voiceURI:'b',name:'English',lang:'en-US',localService:true}];h.run('refreshVoices()');assert.equal(h.get('voiceChoice').children.length,2);h.get('voiceChoice').value=JSON.stringify(['b','English','en-US']);h.get('voiceChoice').onchange();h.get('voice').checked=true;h.run('speak("Bonjour")');assert.equal(spoken,undefined);assert.equal(h.run('chooseVoice()'),null);h.run('selectPersona(PERSONAS[3])');h.run('speak("Bonjour")');assert.equal(spoken.voice.name,'Audrey');voices=[];h.run('speak("Bonjour")');assert.equal(h.run('chooseVoice()'),null);});
 test('la voix formateur exacte précède le repli, sans deviner le genre des voix numérotées',()=>{let voices=[{name:'Google français 4 (Natural)',lang:'fr-FR',voiceURI:'g'},{name:'Thomas',lang:'fr-FR',voiceURI:'t'}];const h=harness(undefined,{getVoices:()=>voices,addEventListener(){},cancel(){}});h.run("selected={...selected,preferredVoiceNames:['Google français 4 (Natural)']}");assert.equal(h.run('chooseVoice().name'),'Google français 4 (Natural)');voices=voices.slice(1);assert.equal(h.run('chooseVoice().name'),'Thomas');voices=[{name:'Google français 3 (Natural)',lang:'fr-FR',voiceURI:'g3'},{name:'Thomas',lang:'fr-FR',voiceURI:'t'}];assert.equal(h.run('chooseVoice().name'),'Thomas');});
+
+test('Android : aucune voix générique féminine ni canadienne choisie par défaut pour Marc',()=>{let voices=[{name:'Google français',lang:'fr-FR',voiceURI:'generic'},{name:'Thomas',lang:'fr-CA',voiceURI:'canada'},{name:'Google français 5 (Natural)',lang:'fr-FR',voiceURI:'number'}];const h=harness(undefined,{getVoices:()=>voices,addEventListener(){},cancel(){},speak(){throw Error('Ne doit pas parler sans voix validée');}},'Android');assert.equal(h.run('chooseVoice()'),null);h.get('voice').checked=true;h.run('start()');assert.equal(h.run('active'),true);assert.equal(h.run('speaking'),false);h.get('voiceChoice').value=JSON.stringify(['generic','Google français','fr-FR']);h.get('voiceChoice').onchange();assert.equal(h.run('chooseVoice().voiceURI'),'generic');voices=[{name:'Audrey',lang:'fr-CA',voiceURI:'ca'}];h.run('selectPersona(PERSONAS[1])');assert.equal(h.run('chooseVoice()'),null);});
+test('la fiche de préparation est visible avant le chronomètre',()=>{const h=harness();assert.match(h.get('offerSheet').textContent,/1 800/);assert.equal(h.run('startedAt'),0);assert.equal(h.run('active'),false);});

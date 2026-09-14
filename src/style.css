@@ -9,3 +9,5 @@
 #stage{display:grid;place-items:center;background:#b8c9d8;overflow:hidden}.illustrated-client{height:100%;aspect-ratio:1.03;background-size:300% 300%;background-repeat:no-repeat;transform-origin:center}.illustrated-client.moving{animation:portrait-breathe 9s ease-in-out infinite}@keyframes portrait-breathe{0%,100%{transform:scale(1.01)}50%{transform:scale(1.025)}}.voice-settings{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:12px 0;font-size:11px}.voice-settings select{max-width:100%;flex:1;min-width:180px;padding:8px;border:1px solid var(--line);border-radius:8px;background:white}.voice-settings small{width:100%;color:var(--muted)}@media(max-width:800px){.personas{grid-template-columns:repeat(2,1fr)}}
 
 .browser-advice{padding:13px 5vw;background:#eaf4fc;border-bottom:1px solid #cbdfee;color:#285577;font-size:12px;line-height:1.6}.browser-advice strong{display:block}
+
+.offer-prep{margin:18px 0;padding:15px;border:1px solid var(--line);border-radius:12px;background:#fff;font-size:12px;line-height:1.7}.offer-prep summary{cursor:pointer;font-weight:700}#offerSheet{white-space:pre-line;padding-top:12px}
