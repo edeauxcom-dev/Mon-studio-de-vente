@@ -1,4 +1,4 @@
-import { OFFER } from './offer.js';
+import { OFFERS, offerSheet, scenarioFor } from './offer.js';
 import './style.css';
 import logoUrl from './assets/my-partner-school.png?inline';
 import { AvatarStage } from './avatar.js';
@@ -8,14 +8,14 @@ import { demoReply } from './demo.js';
 const $=id=>document.getElementById(id);
 const icons={mic:'<svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg>',send:'<svg viewBox="0 0 24 24"><path d="m4 4 17 8-17 8 3-8-3-8ZM7 12h14"/></svg>'};
 document.querySelector('#app').innerHTML=`
-<header class="topbar"><a class="brand" href="./"><img class="brand-logo" src="${logoUrl}" alt="My Partner School" width="300" height="93"><span class="brand-title">Studio de vente<small>SIMULATIONS IMMERSIVES</small></span></a><div class="top-status"><span class="status-dot"></span> Espace d’entraînement <span class="version">BÊTA 02</span></div></header>
+<header class="topbar"><a class="brand" href="./"><img class="brand-logo" src="${logoUrl}" alt="My Partner School" width="300" height="93"><span class="brand-title">Studio de vente<small>SIMULATIONS IMMERSIVES</small></span></a><div class="top-status"><span class="status-dot"></span> Espace d’entraînement <span class="version">PILOTE 04</span></div></header>
 <div class="browser-advice"><strong>Google Chrome recommandé sur ordinateur pour cet essai.</strong> Les voix varient selon l’appareil, y compris dans Chrome sur Android. Écoutez un essai avant l’entretien. Si aucune voix adaptée n’est reconnue, continuez en texte ou choisissez une voix après écoute.</div>
 <main class="layout"><aside class="sidebar"><div class="section-label">VOTRE MISE EN SITUATION</div><h1>Une vraie conversation.<br><em>Un terrain d’essai.</em></h1><p class="intro">Entraînez-vous à découvrir, convaincre et négocier face à un client virtuel.</p>
 <div class="section-label clients-label">01 — CHOISIR SON INTERLOCUTEUR</div><div id="personas" class="personas"></div>
-<div class="brief"><span class="section-label">VOTRE MISSION · CAP VENTE</span><h2 id="missionTitle"></h2><p id="mission"></p><details><summary>Consulter le dossier client</summary><div id="dossier"></div></details></div>
+<div class="session-settings"><label for="offerChoice">02 — Choisir l’offre à vendre</label><select id="offerChoice"></select><p>Le client et l’offre restent fixes pendant l’entretien.</p></div><div class="brief"><span class="section-label">VOTRE MISSION</span><h2 id="missionTitle"></h2><p id="mission"></p><details><summary>Consulter le dossier client</summary><div id="dossier"></div></details></div>
 <div class="offer-prep"><span class="section-label">AVANT DE COMMENCER</span><p>Préparation libre, hors chronomètre. Entretien conseillé : 5 à 8 minutes. Objectif : une prochaine étape, pas une résolution technique.</p><details open><summary>Votre fiche commerciale · à garder sous les yeux</summary><div id="offerSheet"></div></details></div><div class="session-settings"><label for="engine">Mode de simulation</label><select id="engine"><option value="demo">Démonstration · sans clé</option value="ai">Entretien avec l’IA</option></select><p id="engineNote">Réponses prédéfinies pour essayer les avatars. Pas d’évaluation pédagogique.</p><div id="accessWrap" hidden><label for="accessCode">Code de session fourni par le formateur</label><input id="accessCode" type="password" autocomplete="off" maxlength="128" placeholder="Votre code de session"></div></div>
-<div class="sidebar-foot">Solutions de formation · Vente B2B<br><span>4 clients · 4 compétences à travailler</span></div></aside>
-<section class="workspace" aria-label="Entretien"><div class="workspace-heading"><div><span class="section-label">02 — À VOUS DE JOUER</span><h2>Face à votre client</h2></div><button id="reset" class="text-button">Nouvelle session ↗</button></div>
+<div class="sidebar-foot">Solutions de formation · Vente B2B<br><span>4 clients · 6 offres · 24 situations</span></div></aside>
+<section class="workspace" aria-label="Entretien"><div class="workspace-heading"><div><span class="section-label">03 — À VOUS DE JOUER</span><h2>Face à votre client</h2></div><button id="reset" class="text-button">Nouvelle session ↗</button></div>
 <div class="stage-shell"><div id="stage"></div><div id="graphicsError" hidden>Le portrait n’est pas disponible dans ce navigateur. L’entretien reste accessible en texte.</div><div class="stage-top"><span id="modeBadge" class="glass-badge">DÉMONSTRATION</span><button id="motion" class="glass-button" aria-pressed="true">Mouvements : oui</button></div><div class="stage-bottom"><div><div class="name-line"><span class="live-dot"></span><h3 id="clientName"></h3></div><p id="clientRole"></p></div><span id="stateBadge" role="status">Prêt à vous recevoir</span></div><div id="subtitle" class="subtitle" hidden></div></div>
 <div class="session-strip"><span id="turns">0 échange</span><div class="mood-wrap"><span>Climat</span><meter id="mood" min="0" max="100" value="50" aria-label="Climat de l’entretien"></meter><span id="moodLabel">Neutre</span></div><span id="timer">00:00</span></div>
 <div id="notice" class="notice" role="status">Commencez la session : votre client prendra la parole.</div>
@@ -25,10 +25,11 @@ document.querySelector('#app').innerHTML=`
 <form id="composer" class="composer"><button type="button" id="mic" title="Prendre la parole" aria-label="Prendre la parole au micro" disabled>${icons.mic}</button><label class="sr-only" for="input">Votre réplique</label><textarea id="input" rows="2" maxlength="4000" placeholder="Posez une question à votre client…" disabled></textarea><button id="send" type="submit" title="Envoyer" aria-label="Envoyer la réplique" disabled>${icons.send}</button></form>
 <div class="bottom-actions"><span id="voiceHelp">Micro facultatif · Vous pouvez aussi écrire.</span><button id="start" class="primary">Commencer l’entretien <span>→</span></button><button id="interrupt" class="secondary" hidden>Interrompre la voix</button><button id="finish" class="secondary" hidden>Terminer et débriefer</button></div>
 </section></main>
-<footer>Client virtuel animé · Expressions illustrées · Voix sans synchronisation labiale · Les échanges IA sont transmis à Anthropic. Aucun enregistrement audio n’est stocké par l’application.</footer>
-<dialog id="results"><div class="results-top"><span class="section-label">03 — PRENDRE DU RECUL</span><button id="closeResults" aria-label="Fermer le débriefing">×</button></div><h2 id="resultTitle">Votre débriefing</h2><p id="resultNote"></p><div id="scores" class="scores"></div><div id="feedback"></div><div class="dialog-actions"><button id="export" class="secondary">Télécharger l’entretien</button><button id="retryEval" class="primary" hidden>Réessayer l’analyse</button><button id="restart" class="primary">Recommencer</button></div></dialog>`;
+<footer>Client virtuel animé · Expressions illustrées · Voix sans synchronisation labiale · Les échanges IA sont transmis à Cloudflare ou Anthropic selon le mode choisi. Aucun enregistrement audio n’est stocké par l’application.</footer>
+<dialog id="results"><div class="results-top"><span class="section-label">04 — PRENDRE DU RECUL</span><button id="closeResults" aria-label="Fermer le débriefing">×</button></div><h2 id="resultTitle">Votre débriefing</h2><p id="resultNote"></p><div id="scores" class="scores"></div><div id="feedback"></div><details class="pilot-feedback" open><summary>Votre retour sur cet essai (facultatif)</summary><label for="pilotUseful">Cet exercice vous aide-t-il à vous entraîner ?</label><select id="pilotUseful"><option value="">Non renseigné</option><option>Oui</option><option>En partie</option><option>Non</option></select><label for="pilotRealism">Le client vous a-t-il semblé crédible ?</label><select id="pilotRealism"><option value="">Non renseigné</option><option>Oui</option><option>En partie</option><option>Non</option></select><label for="pilotComment">Ce qui vous a aidé ou gêné</label><textarea id="pilotComment" maxlength="2000" rows="3"></textarea><small>Inclus dans le fichier « Télécharger l’entretien ». Rien n’est envoyé automatiquement ; transmettez ce fichier à votre formateur.</small></details><div class="dialog-actions"><button id="export" class="secondary">Télécharger l’entretien</button><button id="retryEval" class="primary" hidden>Réessayer l’analyse</button><button id="restart" class="primary">Recommencer</button></div></dialog>`;
 
-$('offerSheet').textContent=OFFER;
+let selectedOffer=OFFERS[0],cloudflareReady=false;
+OFFERS.forEach(o=>{const option=document.createElement('option');option.value=o.id;option.textContent=o.name;$('offerChoice').append(option);});$('offerChoice').value=selectedOffer.id;
 let selected=PERSONAS[0],avatar=null,active=false,busy=false,ended=false,history=[],mood=50,generation=0,requestController=null,startedAt=0,evaluation=null;
 let speaking=false,recognizing=false,recognition=null,utterance=null,recognitionGeneration=0,autoTimer=null,speechTimer=null,ready=false;
 try{avatar=new AvatarStage($('stage'),selected.id);}catch(e){$('graphicsError').hidden=false;console.warn('Portrait indisponible',e);}
@@ -41,7 +42,7 @@ function controls(){
   $('mic').disabled=!recognition||!active||ended||busy;
   $('finish').hidden=!active||ended;$('finish').disabled=busy;
   $('start').hidden=active||ended;$('interrupt').hidden=!speaking;
-  $('engine').disabled=active||ended;$('accessCode').disabled=active||ended;
+  $('engine').disabled=active||ended;$('offerChoice').disabled=active||ended;$('accessCode').disabled=active||ended;
   document.querySelectorAll('.persona-card').forEach(b=>b.disabled=active);
 }
 function addMessage(role,content){
@@ -51,9 +52,9 @@ function addMessage(role,content){
 }
 function refreshMood(delta=0,gesture='neutral'){mood=Math.max(0,Math.min(100,mood+delta*8));$('mood').value=mood;$('moodLabel').textContent=mood<35?'Réservé':mood>65?'Engagé':'Neutre';avatar?.setMood(mood,gesture);$('turns').textContent=`${history.filter(m=>m.role==='user').length} échange(s)`;}
 function selectPersona(p){
-  selected=p;avatar?.setPersona(p.id);$('clientName').textContent=p.name;$('clientRole').textContent=p.role+' · '+p.company;
-  $('missionTitle').textContent=missions[p.id];$('mission').textContent=p.fiche[1].split(' : ')[1]||p.fiche[1];$('dossier').replaceChildren();refreshVoices();
-  p.fiche.forEach(t=>{const el=document.createElement('p');el.textContent=t;$('dossier').append(el);});
+  selected={...p,...scenarioFor(p,selectedOffer)};$('offerSheet').textContent=offerSheet(selectedOffer);const brief=selected;avatar?.setPersona(p.id);$('clientName').textContent=p.name;$('clientRole').textContent=p.role+' · '+p.company;
+  $('missionTitle').textContent=missions[p.id];$('mission').textContent=brief.fiche[1].split(' : ')[1]||brief.fiche[1];$('dossier').replaceChildren();refreshVoices();
+  brief.fiche.forEach(t=>{const el=document.createElement('p');el.textContent=t;$('dossier').append(el);});
   document.querySelectorAll('.persona-card').forEach(b=>{b.classList.toggle('selected',b.dataset.id===p.id);b.setAttribute('aria-pressed',String(b.dataset.id===p.id));});refreshMood();
 }
 PERSONAS.forEach((p,i)=>{const b=document.createElement('button');b.className='persona-card';b.dataset.id=p.id;b.innerHTML=`<span class="persona-initial p-${p.id}">${p.name.split(' ').map(n=>n[0]).join('')}</span><span class="persona-copy"><strong>${p.name}</strong><small>${p.role}</small><em>${p.tag}</em></span><span class="persona-index">0${i+1}</span>`;b.onclick=()=>{if(!active){resetSession();selectPersona(p);}};$('personas').append(b);});
@@ -109,7 +110,7 @@ function startListening(){
 }
 async function api(action,messages){
   const controller=new AbortController();requestController=controller;const timer=setTimeout(()=>controller.abort(),55000);
-  try{const response=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json','X-Access-Code':$('accessCode').value},body:JSON.stringify({action,persona:selected.id,messages}),signal:controller.signal});
+  try{const response=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json','X-Access-Code':$('accessCode').value},body:JSON.stringify({action,persona:selected.id,offer:selectedOffer.id,provider:$('engine').value==='cloudflare'?'cloudflare':'anthropic',messages}),signal:controller.signal});
     const data=await response.json();if(!response.ok)throw new Error(data.error||'Service indisponible.');return data;
   }finally{clearTimeout(timer);if(requestController===controller)requestController=null;}
 }
@@ -120,19 +121,19 @@ async function send(){
   cancelVoice();const token=generation;busy=true;controls();state('thinking','Votre client réfléchit…');notify('Votre client prépare sa réponse.');
   const candidate=[...history,{role:'user',content:text}];
   try{
-    const result=$('engine').value==='demo'?await new Promise(resolve=>setTimeout(()=>resolve(demoReply(selected.id,text,candidate.length,candidate)),650)):await api('chat',candidate);
+    const result=$('engine').value==='demo'?await new Promise(resolve=>setTimeout(()=>resolve(demoReply(selected.id,text,candidate.length,candidate,selectedOffer.id)),650)):await api('chat',candidate);
     if(token!==generation)return;
     history=candidate;history.push({role:'assistant',content:result.reply});addMessage('user',text);addMessage('assistant',result.reply);$('input').value='';busy=false;refreshMood(result.mood_delta,result.gesture);avatar?.setExpression?.(result.expression);controls();
     notify($('engine').value==='demo'?'Démonstration : réponses prédéfinies. Activez le mode IA pour un entretien personnalisé.':'À vous de poursuivre. Écoutez, questionnez, puis proposez une suite.');speak(result.reply);
   }catch(e){if(token!==generation)return;busy=false;state('idle','Réponse interrompue');notify(e.name==='AbortError'?'Délai dépassé. Votre réplique est conservée ; vous pouvez la renvoyer.':e.message,true);controls();}
 }
 function start(){
-  if($('engine').value==='ai'&&!$('accessCode').value.trim()){notify('Saisissez le code de session du formateur.',true);$('accessCode').focus();return;}
+  if($('engine').value!=='demo'&&!$('accessCode').value.trim()){notify('Saisissez le code de session du formateur.',true);$('accessCode').focus();return;}
   active=true;ended=false;startedAt=Date.now();history=[{role:'assistant',content:selected.greeting}];addMessage('assistant',selected.greeting);controls();notify('L’entretien a commencé. Vous pouvez répondre au micro ou au clavier.');speak(selected.greeting);
 }
 function resetSession(){
   generation++;requestController?.abort();cancelVoice();active=false;ended=false;busy=false;history=[];mood=50;evaluation=null;startedAt=0;
-  $('messages').innerHTML='<p class="empty">Votre conversation s’affichera ici.</p>';$('input').value='';$('subtitle').hidden=true;$('timer').textContent='00:00';$('results').close();refreshMood();state('idle','Prêt à vous recevoir');controls();notify('Commencez la session : votre client prendra la parole.');
+  $('pilotUseful').value='';$('pilotRealism').value='';$('pilotComment').value='';$('messages').innerHTML='<p class="empty">Votre conversation s’affichera ici.</p>';$('input').value='';$('subtitle').hidden=true;$('timer').textContent='00:00';$('results').close();refreshMood();state('idle','Prêt à vous recevoir');controls();notify('Commencez la session : votre client prendra la parole.');
 }
 function feedbackSection(title,items){const h=document.createElement('h3');h.textContent=title;const ul=document.createElement('ul');items.forEach(t=>{const li=document.createElement('li');li.textContent=t;ul.append(li);});$('feedback').append(h,ul);}
 async function finish(){
@@ -151,7 +152,7 @@ async function finish(){
   }catch(e){if(token!==generation)return;$('resultTitle').textContent='Analyse indisponible';$('resultNote').textContent=e.message;$('retryEval').hidden=false;
   }finally{if(token===generation){busy=false;controls();}}
 }
-function exportSession(){const data={date:new Date().toISOString(),client:selected.name,mode:$('engine').value,conversation:history,evaluation};const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=`entretien-${selected.id}-${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+function exportSession(){const data={date:new Date().toISOString(),client:selected.name,offre:selectedOffer.name,offreId:selectedOffer.id,retourPilote:{utilite:$('pilotUseful').value,realisme:$('pilotRealism').value,commentaire:$('pilotComment').value},mode:$('engine').value,conversation:history,evaluation};const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=`entretien-${selected.id}-${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 $('start').onclick=start;$('reset').onclick=()=>{if(!history.some(m=>m.role==='user')||confirm('Recommencer et effacer cet entretien ?'))resetSession();};$('restart').onclick=resetSession;
 $('finish').onclick=finish;$('retryEval').onclick=finish;$('closeResults').onclick=()=>$('results').close();$('export').onclick=exportSession;
 $('composer').onsubmit=e=>{e.preventDefault();send();};$('input').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();send();}};
@@ -159,9 +160,11 @@ $('mic').onclick=()=>{if(recognizing){recognition.stop();}else startListening();
 $('voice').onchange=()=>{if(!$('voice').checked){cancelVoice();scheduleListening();}};
 $('handsfree').onchange=()=>{if($('handsfree').checked)notify('Mains libres : le micro s’ouvrira après la réponse du client. Votre navigateur peut traiter la dictée via son propre service.');else{clearTimeout(autoTimer);if(recognizing)cancelVoice();}};
 $('motion').onclick=()=>{if(!avatar)return;avatar.motion=!avatar.motion;$('motion').textContent='Mouvements : '+(avatar.motion?'oui':'non');$('motion').setAttribute('aria-pressed',String(avatar.motion));};
-$('engine').onchange=()=>{const ai=$('engine').value==='ai';$('accessWrap').hidden=!ai;$('modeBadge').textContent=ai?'ENTRETIEN IA':'DÉMONSTRATION';$('engineNote').textContent=ai?(ready?'IA configurée. Saisissez votre code de session.':'Après installation, configurez la clé IA et le code de session dans Cloudflare.'):'Réponses prédéfinies pour essayer les avatars. Pas d’évaluation pédagogique.';};
+function engineInfo(){const mode=$('engine').value,ai=mode!=='demo';$('accessWrap').hidden=!ai;$('modeBadge').textContent=mode==='cloudflare'?'IA CLOUDFLARE':mode==='ai'?'IA ANTHROPIC':'RÉPLIQUES PRÉDÉFINIES';$('engineNote').textContent=mode==='cloudflare'?(cloudflareReady?'IA disponible. Quota quotidien partagé sur Workers Free ; arrêt si épuisé. Saisissez le code formateur.':'Après déploiement, configurez le code formateur dans Cloudflare. Le compte doit rester Workers Free pour éviter les dépassements payants.'):mode==='ai'?(ready?'Anthropic configuré : les appels consomment du crédit.':'Ce moteur payant nécessite une clé Anthropic dans Cloudflare.'):'Réponses prédéfinies, sans IA ni note : utile pour essayer l’interface.';}
+$('engine').onchange=engineInfo;
+$('offerChoice').onchange=()=>{if(active||ended){$('offerChoice').value=selectedOffer.id;return;}const offer=OFFERS.find(o=>o.id===$('offerChoice').value);if(!offer)return;resetSession();selectedOffer=offer;selectPersona(PERSONAS.find(p=>p.id===selected.id));};
 setInterval(()=>{if(active&&!ended&&startedAt){const seconds=Math.floor((Date.now()-startedAt)/1000);$('timer').textContent=String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');}},1000);
 window.addEventListener('pagehide',()=>{generation++;requestController?.abort();cancelVoice();});
 selectPersona(selected);controls();
-fetch('/api/status').then(r=>r.ok?r.json():null).then(data=>{ready=!!data?.ready;}).catch(()=>{});
-if(location.protocol==='file:'){$('engine').querySelector('option[value="ai"]').disabled=true;$('engineNote').textContent='Démonstration autonome. Le mode IA sera disponible une fois le dossier installé sur Cloudflare.';}
+fetch('/api/status').then(r=>r.ok?r.json():null).then(data=>{ready=!!data?.ready;cloudflareReady=!!data?.cloudflareReady;if(cloudflareReady&&!active&&!ended&&$('engine').value==='demo')$('engine').value='cloudflare';engineInfo();}).catch(()=>{});
+if(location.protocol==='file:'){$('engine').querySelector('option[value="ai"]').disabled=true;$('engine').querySelector('option[value="cloudflare"]').disabled=true;$('engineNote').textContent='Démonstration autonome. Le mode IA sera disponible une fois le dossier installé sur Cloudflare.';}

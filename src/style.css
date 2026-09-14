@@ -11,3 +11,5 @@
 .browser-advice{padding:13px 5vw;background:#eaf4fc;border-bottom:1px solid #cbdfee;color:#285577;font-size:12px;line-height:1.6}.browser-advice strong{display:block}
 
 .offer-prep{margin:18px 0;padding:15px;border:1px solid var(--line);border-radius:12px;background:#fff;font-size:12px;line-height:1.7}.offer-prep summary{cursor:pointer;font-weight:700}#offerSheet{white-space:pre-line;padding-top:12px}
+
+.pilot-feedback{margin-top:20px;font-size:12px;line-height:1.6}.pilot-feedback label{display:block;margin-top:12px}.pilot-feedback select,.pilot-feedback textarea{width:100%;padding:8px;border:1px solid var(--line);border-radius:8px}.pilot-feedback small{display:block;color:var(--muted)}

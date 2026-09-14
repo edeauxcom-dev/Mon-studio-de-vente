@@ -2,7 +2,7 @@ export const PERSONAS = [
   {
     "id": "marc",
     "name": "Marc Delattre",
-    "role": "Responsable commercial",
+    "role": "Responsable de site",
     "company": "Provendex Services",
     "tag": "Difficile · Objection prix",
     "avatarEmoji": "🧑‍💼",
@@ -28,7 +28,7 @@ export const PERSONAS = [
   {
     "id": "sophie",
     "name": "Sophie Vasseur",
-    "role": "Responsable d’équipe commerciale",
+    "role": "Responsable d’équipe",
     "company": "Atelier Meunier Services",
     "tag": "Indécise · Besoin flou",
     "avatarEmoji": "👩‍💼",
@@ -58,7 +58,7 @@ export const PERSONAS = [
   {
     "id": "karim",
     "name": "Karim Bensalem",
-    "role": "Directeur commercial",
+    "role": "Directeur des opérations",
     "company": "Groupe Lorval",
     "tag": "Pressé · Direct",
     "avatarEmoji": "🕴️",
