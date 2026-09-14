@@ -1,7 +1,7 @@
 # Pilote V4 — 4 clients × 6 offres, IA Cloudflare
 
 ## 1. Déposer le nouveau paquet sur GitHub
-Décompressez MPS-STUDIO-PILOTE-V4-24-SITUATIONS.zip. Dans le dépôt Mon-studio-de-vente, onglet Code, choisissez Add file → Upload files et déposez tout le CONTENU du dossier à la racine : src, server, tests, scripts et les fichiers associés. Validez Commit changes sur main. Ne déposez pas le ZIP ni le dossier enveloppe.
+Décompressez MPS-STUDIO-PILOTE-V4-1.zip. Dans le dépôt Mon-studio-de-vente, onglet Code, choisissez Add file → Upload files et déposez tout le CONTENU du dossier à la racine : src, server, tests, scripts et les fichiers associés. Validez Commit changes sur main. Ne déposez pas le ZIP ni le dossier enveloppe.
 
 Cloudflare doit construire et déployer automatiquement. Nom : mon-studio-de-vente. Construction : pnpm run test && pnpm run build. Déploiement : pnpm exec wrangler deploy. Racine : /. Le fichier wrangler.jsonc contient désormais la liaison Workers AI nommée AI et CLOUDFLARE_AI_ENABLED=true.
 
@@ -38,4 +38,4 @@ Commencer par 2 ou 3 apprenants. Leur demander une situation commune pour compar
 Les quotas par formateur/jour/semaine/mois ne sont PAS encore développés. Cette idée est conservée pour une prochaine étape, avec attribution de sessions, suivi de consommation et financement MPS après validation du pilote. Pour l’instant : un code partagé au petit groupe, quota Cloudflare global.
 
 ## Vérification de livraison
-40 tests automatiques réussis, dont les 24 combinaisons en parcours de démonstration, les deux fournisseurs séparés, l’absence de repli payant, les erreurs de quota simulées, le débriefing, les scénarios et les voix Android simulées. Compilation et déploiement à blanc réussis. Les appels IA ont été simulés dans les tests : la disponibilité effective du modèle sur votre compte, la qualité de ses réponses françaises et le rendu/son sur les appareils restent à vérifier en ligne avant l’envoi aux apprenants. Aucun déploiement distant n’a été effectué par l’assistant.
+41 tests automatiques réussis, dont les 24 combinaisons en parcours de démonstration, les deux fournisseurs séparés, l’absence de repli payant, les erreurs de quota simulées, le débriefing, les scénarios et les voix Android simulées. Compilation et déploiement à blanc réussis. Les appels IA ont été simulés dans les tests : la disponibilité effective du modèle sur votre compte, la qualité de ses réponses françaises et le rendu/son sur les appareils restent à vérifier en ligne avant l’envoi aux apprenants. Aucun déploiement distant n’a été effectué par l’assistant.

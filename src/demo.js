@@ -22,7 +22,17 @@ function trainingReply(id,text,turn,history=[]){
  const discovery=/priorit|difficul|objectif|besoin|situation|equipe|frein|probleme/.test(previous);
  if(next)return discovery?result(id==='karim'?'D’accord pour un point de quinze minutes centré sur les mises en situation et la prochaine étape en entretien. Quel créneau proposez-vous, à confirmer ?':'Un second rendez-vous me convient pour préciser le programme et vérifier les disponibilités. Quel objectif et quel créneau proposez-vous ?','agreement',1):result('Avant de fixer la suite, j’aimerais que vous compreniez mieux notre priorité. Que souhaitez-vous savoir sur les entretiens de mon équipe ?','thinking',0);
  if(id==='marc')return /prix|cher|cout|budget|remise/.test(t)?result('Une autre formation est annoncée à 1 500 euros HT. Je n’ai pas encore vérifié si le suivi est inclus. Comment comparer les deux offres ?','skeptical',0):question?result('Mes six commerciaux accordent trop vite des remises quand on les compare à un concurrent. Je voudrais qu’ils sachent mieux défendre la valeur de notre offre.','neutral',1):/mise.*situation|suivi|entrain/.test(t)?result('L’entraînement et le suivi peuvent faire la différence. Expliquez-moi comment ils se rapportent à la difficulté que je viens de décrire.','thinking',1):result('Quel bénéfice concret de votre formation répond à notre difficulté, au-delà du prix ?','skeptical',-1);
- if(id==='sophie')return ack?result('Oui : ils présentent trop tôt notre offre et repartent souvent sans prochaine étape. C’est sur ces deux points que je veux les aider.','agreement',1):question?result('Mes cinq commerciaux parlent beaucoup de nos produits, mais découvrent peu les priorités du client. Les entretiens se terminent souvent sans suite claire.','neutral',1):result('Avant de détailler votre programme, assurons-nous que nous parlons bien de la difficulté de mon équipe.','dissatisfied',-1);
+ if(id==='sophie'){
+  const parts=[];
+  if(/budget|prix|cout|combien.*coute/.test(t))parts.push('Je n’ai pas encore fixé de budget. Je souhaite comprendre la proposition avant de la faire valider.');
+  if(/combien.*(personne|former|participant|commercial)|effectif|nombre de/.test(t))parts.push('Il y a cinq commerciaux à former.');
+  if(parts.length)return result(parts.join(' '),'neutral',1);
+  if(/decouverte|priorite.*client|besoin.*client/.test(t)&&/pertinent|convien|formation|vous dites|vous.*expos|donc|comprend/.test(t))return result('Oui, travailler la découverte des besoins correspond à notre difficulté. J’aimerais aussi qu’ils sachent convenir d’une prochaine étape. Comment se dérouleraient les mises en situation ?','agreement',1);
+  if(ack)return result('Oui : ils présentent trop tôt notre offre et repartent souvent sans prochaine étape. C’est sur ces deux points que je veux les aider.','agreement',1);
+  if(question&&!previous)return result('Mes cinq commerciaux parlent beaucoup de nos produits, mais découvrent peu les priorités du client. Les entretiens se terminent souvent sans suite claire.','neutral',1);
+  return result('Cet aperçu sans IA ne sait pas interpréter cette réplique de manière fiable. Pour poursuivre un véritable entretien, utilisez le mode IA Cloudflare.','neutral',0);
+ }
+
  return question?result('Mes huit commerciaux ont besoin de mieux conclure les échanges par une prochaine étape précise. Je veux surtout de la pratique, en limitant le temps hors terrain.','neutral',1):t.length>230?result('Je vous arrête : soyez plus concis. Quel élément de votre offre répond directement à ma priorité ?','dissatisfied',-1):result('Quel bénéfice concret et quel format proposez-vous pour répondre à notre priorité ?','thinking',0);
 }
 
