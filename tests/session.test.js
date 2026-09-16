@@ -8,6 +8,18 @@ import {OFFERS,offerSheet,scenarioFor} from '../src/offer.js';
 import {PERSONAS} from '../src/personas.js';
 import {demoReply} from '../src/demo.js';
 
+test('micro : une pause conserve le brouillon, reprise ajoute la suite, seul Envoyer transmet',async()=>{
+ const instances=[];class Mic{constructor(){instances.push(this);}start(){}abort(){}stop(){this.onend?.();}}
+ let sent=0;const h=harness(async(url)=>{if(url==='/api/status')return Response.json({ready:true});sent++;return Response.json({reply:'Merci.'});},null,'Desktop',Mic);
+ h.get('engine').value='cloudflare';h.get('accessCode').value='test';h.run('start()');h.run('startListening()');
+ const result=text=>({results:[Object.assign([{transcript:text}],{isFinal:true})]});
+ instances.at(-1).onresult(result('Deux demi-journées'));instances.at(-1).onend();
+ assert.equal(sent,0);assert.equal(h.get('input').value,'Deux demi-journées');assert.equal(h.run('history.length'),1);
+ h.run('startListening()');assert.equal(instances.at(-1).continuous,true);instances.at(-1).onresult(result('de quatre heures font huit heures.'));instances.at(-1).onend();
+ assert.equal(h.get('input').value,'Deux demi-journées de quatre heures font huit heures.');assert.equal(sent,0);
+ await h.run('send()');assert.equal(sent,1);assert.equal(h.run('history[1].content'),'Deux demi-journées de quatre heures font huit heures.');
+});
+
 test('entrée : erreur conserve la page d’accès, validation ouvre Cloudflare et sortie efface le code',async()=>{
  let allow=false,calls=0;
  const h=harness(async(url,opts)=>{
@@ -40,7 +52,7 @@ test('export pendant analyse bloqué puis débriefing conservé',async()=>{
  assert.equal(h.run('sessionExport().evaluation.verdict'),'Bilan.');assert.equal(h.run('sessionExport().evaluation_status'),'complete');assert.equal(h.run('sessionExport().conversation.at(-1).expression'),'agreement');
 });
 
-function harness(fetcher=async()=>Response.json({ready:true}),speech=null,userAgent='Desktop'){
+function harness(fetcher=async()=>Response.json({ready:true}),speech=null,userAgent='Desktop',SpeechRecognition=undefined){
   const elements=new Map();
   class Element{
     constructor(){this.children=[];this.value='';this.hidden=false;this.disabled=false;this.checked=false;this.dataset={};this.textContent='';this.style={};this.classList={toggle(){},add(){},remove(){}};}
@@ -55,7 +67,7 @@ function harness(fetcher=async()=>Response.json({ready:true}),speech=null,userAg
   const document={querySelector:()=>elements.get('app'),getElementById:id=>elements.get(id),createElement:()=>new Element(),querySelectorAll:()=>elements.get('personas')?.children||[]};
   const timers=new Map();let next=0;const timeout=(f,ms)=>{const id=++next;timers.set(id,{f,ms});return id;};
   class FakeAvatar{constructor(){this.motion=true;}setPersona(){}setState(s){this.state=s;}setMood(){}word(){}}
-  const context=vm.createContext({navigator:{userAgent},document,window:{addEventListener(){},speechSynthesis:speech},SpeechSynthesisUtterance:function(text){this.text=text;},localStorage:{getItem(){return null;},setItem(){}},location:{protocol:'https:'},matchMedia:()=>({matches:false}),AvatarStage:FakeAvatar,logoUrl:"test-logo.png",OFFERS,offerSheet,scenarioFor,PERSONAS,demoReply,console,confirm:()=>true,setTimeout:timeout,clearTimeout:id=>timers.delete(id),setInterval(){},fetch:fetcher,AbortController,AbortSignal,Blob,URL});
+  const context=vm.createContext({navigator:{userAgent},document,window:{addEventListener(){},speechSynthesis:speech,SpeechRecognition},SpeechSynthesisUtterance:function(text){this.text=text;},localStorage:{getItem(){return null;},setItem(){}},location:{protocol:'https:'},matchMedia:()=>({matches:false}),AvatarStage:FakeAvatar,logoUrl:"test-logo.png",OFFERS,offerSheet,scenarioFor,PERSONAS,demoReply,console,confirm:()=>true,setTimeout:timeout,clearTimeout:id=>timers.delete(id),setInterval(){},fetch:fetcher,AbortController,AbortSignal,Blob,URL});
   const code=fs.readFileSync(new URL('../src/main.js',import.meta.url),'utf8').replace(/^import .*;\n/gm,'');
   vm.runInContext(code,context);
   vm.runInContext('authenticated=true',context);
