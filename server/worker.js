@@ -36,6 +36,19 @@ export function parseCloudflareResult(answer, action) {
   if(raw===undefined||raw===null||raw==='')throw new Error('CF_OUTPUT_MISSING');
   return parseResult(typeof raw==='string'?raw:JSON.stringify(raw),action);
 }
+export function parseCloudflareChat(answer) {
+  const envelope=answer?.result ?? answer;
+  const choice=envelope?.choices?.[0];
+  if(choice?.finish_reason==='length')throw new Error('CF_OUTPUT_TRUNCATED');
+  let raw=envelope?.response ?? choice?.message?.content ?? (typeof envelope==='string'?envelope:undefined);
+  if(Array.isArray(raw))raw=raw.filter(p=>p?.type==='text'&&typeof p.text==='string').map(p=>p.text).join('');
+  if(raw && typeof raw==='object')return parseResult(JSON.stringify(raw),'chat');
+  if(typeof raw!=='string'||!raw.trim())throw new Error('CF_OUTPUT_MISSING');
+  const reply=raw.trim();
+  if(/^[{\[]|^```/.test(reply))return parseResult(reply,'chat');
+  if(reply.length>4000||/<\/?(?:think|analysis)>/i.test(reply))throw new Error('CF_CHAT_TEXT_INVALID');
+  return {reply,mood_delta:0,gesture:'neutral'};
+}
 export function parseResult(raw, action) {
   const cleaned = raw.trim().replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
   const data = JSON.parse(cleaned);
@@ -90,10 +103,14 @@ export async function handle(request, env, fetcher = fetch) {
       const dialogue=apiMessages[0]?.role==='assistant'
         ? [{role:'user',content:'Commence cet entretien de vente en incarnant le client décrit.'},...apiMessages]
         : apiMessages;
-      const aiInput={messages:[{role:'system',content:system},...dialogue],max_tokens:action==='chat'?500:1400,temperature:action==='chat'?.55:.2};
-      const answer=await env.AI.run('@cf/mistralai/mistral-small-3.1-24b-instruct',{...aiInput,guided_json:resultSchema(action)});
+      const cfSystem=action==='chat'
+        ? system.split('JSON uniquement :')[0]+'Réponds uniquement avec les paroles du client en français : pas de JSON, pas de code, pas de commentaire sur ton raisonnement. Reste professionnel et nuancé.'
+        : system;
+      const aiInput={messages:[{role:'system',content:cfSystem},...dialogue],max_tokens:action==='chat'?500:1400,temperature:action==='chat'?.55:.2};
+      if(action==='evaluate')aiInput.guided_json=resultSchema(action);
+      const answer=await env.AI.run('@cf/mistralai/mistral-small-3.1-24b-instruct',aiInput);
       aiStage='response';
-      return json(parseCloudflareResult(answer,action));
+      return json(action==='chat'?parseCloudflareChat(answer):parseCloudflareResult(answer,action));
     }
     const response = await fetcher('https://api.anthropic.com/v1/messages', {
       method:'POST', headers:{'Content-Type':'application/json','x-api-key':env.ANTHROPIC_API_KEY,'anthropic-version':'2023-06-01'},
