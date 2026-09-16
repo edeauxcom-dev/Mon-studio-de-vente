@@ -26,6 +26,16 @@ export const criteriaFor = id => [
   ['objection', id === 'marc' ? 'Objection prix' : id === 'sophie' ? 'Clarification du doute' : id === 'claire' ? 'Négociation et contreparties' : 'Concision et pertinence'],
   ['ecoute', 'Écoute active'], ['closing', 'Prochain pas']
 ];
+export function parseCloudflareResult(answer, action) {
+  const envelope=answer?.result ?? answer;
+  const choice=envelope?.choices?.[0];
+  if(choice?.finish_reason==='length')throw new Error('CF_OUTPUT_TRUNCATED');
+  let raw=envelope?.response ?? choice?.message?.content ?? (typeof envelope==='string'?envelope:undefined);
+  if(raw===undefined && envelope && typeof envelope==='object' && (typeof envelope.reply==='string'||'verdict' in envelope))raw=envelope;
+  if(Array.isArray(raw))raw=raw.filter(part=>part?.type==='text'&&typeof part.text==='string').map(part=>part.text).join('');
+  if(raw===undefined||raw===null||raw==='')throw new Error('CF_OUTPUT_MISSING');
+  return parseResult(typeof raw==='string'?raw:JSON.stringify(raw),action);
+}
 export function parseResult(raw, action) {
   const cleaned = raw.trim().replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
   const data = JSON.parse(cleaned);
@@ -83,8 +93,7 @@ export async function handle(request, env, fetcher = fetch) {
       const aiInput={messages:[{role:'system',content:system},...dialogue],max_tokens:action==='chat'?500:1400,temperature:action==='chat'?.55:.2};
       const answer=await env.AI.run('@cf/mistralai/mistral-small-3.1-24b-instruct',{...aiInput,guided_json:resultSchema(action)});
       aiStage='response';
-      const raw=answer?.response;
-      return json(parseResult(typeof raw==='string'?raw:JSON.stringify(raw),action));
+      return json(parseCloudflareResult(answer,action));
     }
     const response = await fetcher('https://api.anthropic.com/v1/messages', {
       method:'POST', headers:{'Content-Type':'application/json','x-api-key':env.ANTHROPIC_API_KEY,'anthropic-version':'2023-06-01'},
@@ -98,8 +107,10 @@ export async function handle(request, env, fetcher = fetch) {
   } catch (e) {
     if(provider==='cloudflare') {
       const message=String(e?.message||'');
-      const code=aiStage==='response'?'CF_RESPONSE_INVALID':/quota|neurons|daily limit/i.test(message)?'CF_QUOTA':/rate limit|too many requests|429/i.test(message)?'CF_RATE_LIMIT':/template|alternat|role|validation|schema|400|invalid input/i.test(message)?'CF_INPUT_REJECTED':/not found|unknown model|5018/i.test(message)?'CF_MODEL_UNAVAILABLE':'CF_REQUEST_FAILED';
+      const code=aiStage==='response'?(['CF_OUTPUT_MISSING','CF_OUTPUT_TRUNCATED'].includes(message)?message:'CF_RESPONSE_INVALID'):/quota|neurons|daily limit/i.test(message)?'CF_QUOTA':/rate limit|too many requests|429/i.test(message)?'CF_RATE_LIMIT':/template|alternat|role|validation|schema|400|invalid input/i.test(message)?'CF_INPUT_REJECTED':/not found|unknown model|5018/i.test(message)?'CF_MODEL_UNAVAILABLE':'CF_REQUEST_FAILED';
       const descriptions={CF_RESPONSE_INVALID:'Le modèle a répondu, mais sa réponse est incomplète ou dans un format illisible.',CF_QUOTA:'Cloudflare signale une limite de consommation atteinte.',CF_RATE_LIMIT:'Cloudflare limite temporairement la fréquence des demandes.',CF_INPUT_REJECTED:'Cloudflare refuse le format de la demande envoyée au modèle.',CF_MODEL_UNAVAILABLE:'Cloudflare ne trouve pas le modèle demandé.',CF_REQUEST_FAILED:'L’appel au modèle Cloudflare a échoué ; la cause exacte reste à confirmer.'};
+      descriptions.CF_OUTPUT_MISSING='Cloudflare a renvoyé un résultat sans texte exploitable.';
+      descriptions.CF_OUTPUT_TRUNCATED='La réponse du modèle a été coupée avant sa fin.';
       console.error('MPS_AI_ERROR',{code,stage:aiStage});
       return json({error:`${descriptions[code]} Référence : ${code}. Votre texte est conservé. Aucun appel payant de remplacement n’a été effectué.`,code},503);
     }
