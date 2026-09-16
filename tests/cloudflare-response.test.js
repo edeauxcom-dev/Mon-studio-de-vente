@@ -4,7 +4,7 @@ import {parseCloudflareResult,parseCloudflareChat,handle} from '../server/worker
 const data={reply:'Quels besoins avez-vous identifiés ?',expression:'thinking'};
 test('dialogue en texte simple : conserve les paroles sans inventer de score',async()=>{
  const reply='Nous sommes cinq et nous souhaitons mieux découvrir les besoins.';
- assert.deepEqual(parseCloudflareChat({response:reply}),{reply,mood_delta:0,gesture:'neutral'});
+ assert.deepEqual(parseCloudflareChat({response:reply}),{reply,mood_delta:0,gesture:'neutral',expression:'neutral',expression_source:'text_rules'});
  assert.equal(parseCloudflareChat({choices:[{message:{content:reply}}]}).reply,reply);
  assert.throws(()=>parseCloudflareChat({response:'{"reply":'}));
  const req=new Request('https://example.com/api/chat',{method:'POST',headers:{'Content-Type':'application/json','X-Access-Code':'test'},body:JSON.stringify({action:'chat',persona:'sophie',provider:'cloudflare',messages:[{role:'user',content:'Combien êtes-vous ?'}]})});

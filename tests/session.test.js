@@ -8,6 +8,20 @@ import {OFFERS,offerSheet,scenarioFor} from '../src/offer.js';
 import {PERSONAS} from '../src/personas.js';
 import {demoReply} from '../src/demo.js';
 
+test('export pendant analyse bloqué puis débriefing conservé',async()=>{
+ let release;
+ const result={decouverte:3,argumentation:3,objection:3,ecoute:4,closing:2,verdict:'Bilan.',points_forts:[],axes_progres:[],details:[],limites_simulation:[]};
+ const h=harness(async(url,opts)=>{
+   if(url==='/api/status')return Response.json({cloudflareReady:true});
+   if(JSON.parse(opts.body).action==='evaluate')return new Promise(resolve=>{release=()=>resolve(Response.json(result));});
+   return Response.json({reply:'Je suis d’accord.',expression:'agreement',expression_source:'text_rules'});
+ });
+ h.get('engine').value='cloudflare';h.get('accessCode').value='test';h.run('start()');h.get('input').value='Quelle est votre priorité ?';await h.run('send()');
+ const pending=h.run('finish()');assert.equal(h.get('export').disabled,true);h.run('exportSession()');assert.match(h.get('notice').textContent,/Attendez/);
+ release();await pending;assert.equal(h.get('export').disabled,false);
+ assert.equal(h.run('sessionExport().evaluation.verdict'),'Bilan.');assert.equal(h.run('sessionExport().evaluation_status'),'complete');assert.equal(h.run('sessionExport().conversation.at(-1).expression'),'agreement');
+});
+
 function harness(fetcher=async()=>Response.json({ready:true}),speech=null,userAgent='Desktop'){
   const elements=new Map();
   class Element{

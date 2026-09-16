@@ -123,7 +123,7 @@ async function send(){
   try{
     const result=$('engine').value==='demo'?await new Promise(resolve=>setTimeout(()=>resolve(demoReply(selected.id,text,candidate.length,candidate,selectedOffer.id)),650)):await api('chat',candidate);
     if(token!==generation)return;
-    history=candidate;history.push({role:'assistant',content:result.reply});addMessage('user',text);addMessage('assistant',result.reply);$('input').value='';busy=false;refreshMood(result.mood_delta,result.gesture);avatar?.setExpression?.(result.expression);controls();
+    history=candidate;history.push({role:'assistant',content:result.reply,expression:result.expression||'neutral',expression_source:result.expression_source||'model'});addMessage('user',text);addMessage('assistant',result.reply);$('input').value='';busy=false;refreshMood(result.mood_delta,result.gesture);avatar?.setExpression?.(result.expression);controls();
     notify($('engine').value==='demo'?'Démonstration : réponses prédéfinies. Activez le mode IA pour un entretien personnalisé.':'À vous de poursuivre. Écoutez, questionnez, puis proposez une suite.');speak(result.reply);
   }catch(e){if(token!==generation)return;busy=false;state('idle','Réponse interrompue');notify(e.name==='AbortError'?'Délai dépassé. Votre réplique est conservée ; vous pouvez la renvoyer.':e.message,true);controls();}
 }
@@ -132,6 +132,7 @@ function start(){
   active=true;ended=false;startedAt=Date.now();history=[{role:'assistant',content:selected.greeting}];addMessage('assistant',selected.greeting);controls();notify('L’entretien a commencé. Vous pouvez répondre au micro ou au clavier.');speak(selected.greeting);
 }
 function resetSession(){
+  $('export').disabled=false;$('export').textContent='Télécharger l’entretien';
   generation++;requestController?.abort();cancelVoice();active=false;ended=false;busy=false;history=[];mood=50;evaluation=null;startedAt=0;
   $('pilotUseful').value='';$('pilotRealism').value='';$('pilotComment').value='';$('messages').innerHTML='<p class="empty">Votre conversation s’affichera ici.</p>';$('input').value='';$('subtitle').hidden=true;$('timer').textContent='00:00';$('results').close();refreshMood();state('idle','Prêt à vous recevoir');controls();notify('Commencez la session : votre client prendra la parole.');
 }
@@ -142,17 +143,23 @@ async function finish(){
     $('resultTitle').textContent=$('engine').value==='demo'?'Votre essai est terminé':'Entretien sans réplique';$('resultNote').textContent=$('engine').value==='demo'?'Le mode démonstration ne produit pas de note. Passez au mode IA pour obtenir un débriefing basé sur vos échanges.':'Répondez au client lors de votre prochaine session pour obtenir une évaluation.';
     feedbackSection('Pour votre prochain entretien',[missions[selected.id],'Obtenir un prochain pas concret : un objectif, une date et un interlocuteur.']);return;
   }
-  const token=generation;busy=true;$('resultTitle').textContent='Analyse de votre entretien…';$('resultNote').textContent='Le débriefing s’appuie sur votre conversation et les objectifs de ce client.';
+  const token=generation;busy=true;evaluation=null;$('export').disabled=true;$('export').textContent='Analyse en cours…';$('resultTitle').textContent='Analyse de votre entretien…';$('resultNote').textContent='Évaluation indicative : exemples de l’échange et pistes de progrès, à discuter avec le formateur.';
   try{const result=await api('evaluate',history);if(token!==generation)return;evaluation=result;
     const third=selected.id==='marc'?'Objection prix':selected.id==='sophie'?'Clarification du doute':selected.id==='claire'?'Négociation et contreparties':'Concision et pertinence';
     const cats=[['decouverte','Découverte'],['argumentation','Argumentation'],['objection',third],['ecoute','Écoute active'],['closing','Prochain pas']];
     const total=cats.reduce((a,[key])=>a+evaluation[key],0);$('resultTitle').textContent=`Votre débriefing · ${total} / 25`;$('resultNote').textContent=evaluation.verdict;
     cats.forEach(([key,label])=>{const card=document.createElement('div');card.className='score';const title=document.createElement('span');title.textContent=label;const value=document.createElement('strong');value.textContent=evaluation[key]+' / 5';card.append(title,value);$('scores').append(card);});
     feedbackSection('Ce qui a fonctionné',evaluation.points_forts);feedbackSection('À travailler',evaluation.axes_progres);
+    for(const detail of evaluation.details||[]){
+      const label=cats.find(([key])=>key===detail.critere)?.[1]||detail.critere;
+      feedbackSection(label+' · Pourquoi cette note ?',[detail.constat,...detail.preuves.map(p=>`Tour ${p.tour} — ${history[p.tour-1]?.role==='user'?'Commercial':'Client'} : « ${p.citation} »`),'Pour progresser : '+detail.conseil]);
+    }
+    if(evaluation.limites_simulation?.length)feedbackSection('Limites du client virtuel à prendre en compte',evaluation.limites_simulation);
   }catch(e){if(token!==generation)return;$('resultTitle').textContent='Analyse indisponible';$('resultNote').textContent=e.message;$('retryEval').hidden=false;
-  }finally{if(token===generation){busy=false;controls();}}
+  }finally{if(token===generation){busy=false;$('export').disabled=false;$('export').textContent=evaluation?'Télécharger l’entretien et le débriefing':'Télécharger l’entretien sans évaluation';controls();}}
 }
-function exportSession(){const data={date:new Date().toISOString(),client:selected.name,offre:selectedOffer.name,offreId:selectedOffer.id,retourPilote:{utilite:$('pilotUseful').value,realisme:$('pilotRealism').value,commentaire:$('pilotComment').value},mode:$('engine').value,conversation:history,evaluation};const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=`entretien-${selected.id}-${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+function sessionExport(){return {version:'pilote-2026-09-16-b',date:new Date().toISOString(),client:selected.name,offre:selectedOffer.name,offreId:selectedOffer.id,retourPilote:{utilite:$('pilotUseful').value,realisme:$('pilotRealism').value,commentaire:$('pilotComment').value},mode:$('engine').value,conversation:history,evaluation,evaluation_status:evaluation?'complete':$('engine').value==='demo'?'not_applicable':busy?'pending':'unavailable',evaluation_indicative:true};}
+function exportSession(){if(busy){notify('Attendez la fin de l’analyse avant de télécharger.',true);return;}const data=sessionExport();const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=`entretien-${selected.id}-${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 $('start').onclick=start;$('reset').onclick=()=>{if(!history.some(m=>m.role==='user')||confirm('Recommencer et effacer cet entretien ?'))resetSession();};$('restart').onclick=resetSession;
 $('finish').onclick=finish;$('retryEval').onclick=finish;$('closeResults').onclick=()=>$('results').close();$('export').onclick=exportSession;
 $('composer').onsubmit=e=>{e.preventDefault();send();};$('input').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();send();}};
