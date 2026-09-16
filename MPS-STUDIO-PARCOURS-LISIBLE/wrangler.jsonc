@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "mon-studio-de-vente",
+  "main": "server/worker.js",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "run_worker_first": [
+      "/api/*"
+    ]
+  },
+  "vars": {
+    "ANTHROPIC_MODEL": "claude-sonnet-4-6",
+    "CLOUDFLARE_AI_ENABLED": "true",
+    "STUDIO_PROVIDER": "cloudflare"
+  },
+  "ai": {
+    "binding": "AI"
+  }
+}

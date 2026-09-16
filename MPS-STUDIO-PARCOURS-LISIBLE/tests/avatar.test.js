@@ -1,0 +1,8 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+function stage(){let removed=false;const element={style:{},classList:{toggle(){}},setAttribute(){},remove(){removed=true;}};const ctx=vm.createContext({marc:'marc.png',sophie:'sophie.png',karim:'karim.png',claire:'claire.png',document:{createElement:()=>element},container:{append(){}}});vm.runInContext(fs.readFileSync(new URL('../src/avatar.js',import.meta.url),'utf8').replace(/^import .*;\n/gm,'').replace('export class','class')+'\nthis.stage=new AvatarStage(container);',ctx);return {s:ctx.stage,element,removed:()=>removed};}
+test('les quatre portraits se remplacent sans ajouter de couches',()=>{const {s,element}=stage();for(const id of ['marc','sophie','karim','claire']){s.setPersona(id);assert.ok(element.style.backgroundImage.includes(id+'.png'));assert.equal(element.style.backgroundPosition,'0% 0%');}});
+test('les neuf expressions occupent neuf cases distinctes',()=>{const {s,element}=stage();const positions=new Set();for(const e of ['neutral','speaking','thinking','dissatisfied','refusal','agreement','skeptical','joy','sadness']){s.setExpression(e);positions.add(element.style.backgroundPosition);}assert.equal(positions.size,9);});
+test('un refus reste un refus pendant la parole et la réflexion revient à la réponse',()=>{const {s,element}=stage();s.setExpression('refusal');s.setState('speaking');assert.equal(element.style.backgroundPosition,'50% 50%');s.setState('thinking');assert.equal(element.style.backgroundPosition,'100% 0%');s.setState('idle');assert.equal(element.style.backgroundPosition,'50% 50%');s.dispose();});
