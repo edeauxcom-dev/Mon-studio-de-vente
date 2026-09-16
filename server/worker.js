@@ -107,11 +107,15 @@ function evaluationPrompt(persona,offer) {
 export async function handle(request, env, fetcher = fetch) {
   const url = new URL(request.url);
   if (url.pathname === '/api/status' && request.method === 'GET') return json({ ready: !!env.ANTHROPIC_API_KEY && !!env.ACCESS_CODE, cloudflareReady:!!env.AI&&!!env.ACCESS_CODE&&env.CLOUDFLARE_AI_ENABLED==='true' });
-  if (url.pathname !== '/api/chat') return url.pathname.startsWith('/api/') ? json({error:'Adresse inconnue.'},404) : env.ASSETS.fetch(request);
+  if (!['/api/chat','/api/access'].includes(url.pathname)) return url.pathname.startsWith('/api/') ? json({error:'Adresse inconnue.'},404) : env.ASSETS.fetch(request);
   if (request.method !== 'POST') return json({error:'Méthode non autorisée.'},405);
   if (request.headers.get('Origin') && request.headers.get('Origin') !== url.origin) return json({error:'Origine non autorisée.'},403);
   if (!env.ACCESS_CODE) return json({error:'Définissez ACCESS_CODE dans Cloudflare pour activer l’accès aux entretiens IA.'},503);
   if (request.headers.get('X-Access-Code') !== env.ACCESS_CODE) return json({error:'Code de session incorrect.'},401);
+  if(url.pathname==='/api/access'){
+    if(!env.AI||env.CLOUDFLARE_AI_ENABLED!=='true')return json({error:'Le studio n’est pas encore configuré. Contactez votre formateur.'},503);
+    return json({authenticated:true,provider:'cloudflare'});
+  }
   if (!request.headers.get('Content-Type')?.includes('application/json')) return json({error:'Format JSON attendu.'},415);
   if (Number(request.headers.get('Content-Length')) > 128000) return json({error:'Requête trop volumineuse.'},413);
   let input;
@@ -124,6 +128,7 @@ export async function handle(request, env, fetcher = fetch) {
     input = validateInput(JSON.parse(new TextDecoder().decode(all)));
   } catch (e) { return json({error:e instanceof SyntaxError ? 'JSON invalide.' : e.message},400); }
   const {persona, offer, provider, messages, action} = input;
+  if(env.STUDIO_PROVIDER==='cloudflare'&&provider!=='cloudflare')return json({error:'Ce studio utilise uniquement l’IA Cloudflare.'},403);
   if(provider==='anthropic'&&!env.ANTHROPIC_API_KEY)return json({error:'Le mode Anthropic nécessite sa clé API. Choisissez le pilote Cloudflare si disponible.'},503);
   if(provider==='cloudflare'&&(!env.AI||env.CLOUDFLARE_AI_ENABLED!=='true'))return json({error:'Le pilote IA Cloudflare n’est pas activé. Vérifiez la liaison AI et la configuration du Worker.'},503);
   const purchase=`Contexte de l'achat à révéler progressivement : ${offer.need}. Valeur à explorer : ${offer.value}. Pour Claire, contrepartie possible : ${offer.volume}. Aucune autre information produit ne doit être inventée.`;

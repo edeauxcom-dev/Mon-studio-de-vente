@@ -12,7 +12,8 @@
   },
   "vars": {
     "ANTHROPIC_MODEL": "claude-sonnet-4-6",
-    "CLOUDFLARE_AI_ENABLED": "true"
+    "CLOUDFLARE_AI_ENABLED": "true",
+    "STUDIO_PROVIDER": "cloudflare"
   },
   "ai": {
     "binding": "AI"
