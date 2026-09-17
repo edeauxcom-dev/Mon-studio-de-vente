@@ -32,7 +32,7 @@ document.querySelector('#app').innerHTML=`
 <div class="bottom-actions"><span id="voiceHelp">Micro facultatif · Vous pouvez aussi écrire.</span><button id="interrupt" class="secondary" hidden>Interrompre la voix</button><button id="finish" class="secondary" hidden>Terminer et débriefer</button></div>
 </div></div></section></main>
 <footer>Expressions illustrées · Voix sans synchronisation labiale · Les échanges sont transmis à Cloudflare pour générer les réponses et le débriefing. Aucun enregistrement audio n’est stocké par l’application.</footer></div>
-<dialog id="results"><div class="results-top"><span class="section-label">04 — PRENDRE DU RECUL</span><button id="closeResults" aria-label="Fermer le débriefing">×</button></div><h2 id="resultTitle">Votre débriefing</h2><p id="resultNote"></p><div id="scores" class="scores"></div><div id="feedback"></div><details class="pilot-feedback" open><summary>Votre retour sur cet essai (facultatif)</summary><label for="pilotUseful">Cet exercice vous aide-t-il à vous entraîner ?</label><select id="pilotUseful"><option value="">Non renseigné</option><option>Oui</option><option>En partie</option><option>Non</option></select><label for="pilotRealism">Le client vous a-t-il semblé crédible ?</label><select id="pilotRealism"><option value="">Non renseigné</option><option>Oui</option><option>En partie</option><option>Non</option></select><label for="pilotComment">Ce qui vous a aidé ou gêné</label><textarea id="pilotComment" maxlength="2000" rows="3"></textarea><small>Inclus dans le fichier « Télécharger l’entretien ». Rien n’est envoyé automatiquement ; transmettez ce fichier à votre formateur.</small></details><div class="dialog-actions"><button id="export" class="secondary">Télécharger l’entretien</button><button id="retryEval" class="primary" hidden>Réessayer l’analyse</button><button id="restart" class="primary">Recommencer</button></div></dialog>`;
+<dialog id="results"><div class="results-top"><span class="section-label">04 — PRENDRE DU RECUL</span><button id="closeResults" aria-label="Fermer le débriefing">×</button></div><h2 id="resultTitle">Votre débriefing</h2><p id="resultNote"></p><div id="scores" class="scores"></div><div id="feedback"></div><details class="pilot-feedback" open><summary>Votre retour sur cet essai (facultatif)</summary><label for="pilotUseful">Cet exercice vous aide-t-il à vous entraîner ?</label><select id="pilotUseful"><option value="">Non renseigné</option><option>Oui</option><option>En partie</option><option>Non</option></select><label for="pilotRealism">Le client vous a-t-il semblé crédible ?</label><select id="pilotRealism"><option value="">Non renseigné</option><option>Oui</option><option>En partie</option><option>Non</option></select><label for="pilotComment">Ce qui vous a aidé ou gêné</label><textarea id="pilotComment" maxlength="2000" rows="3"></textarea><small>Inclus dans le fichier « Télécharger l’entretien ». Rien n’est envoyé automatiquement ; transmettez ce fichier à votre formateur.</small></details><div class="dialog-actions"><button id="export" class="secondary">Télécharger l’entretien</button><button id="retryEval" class="primary" hidden>Réessayer l’analyse</button><button id="restart" class="primary">Recommencer</button></div><p class="dialog-hint">En fermant ce débriefing (croix ou Recommencer), vous pouvez ensuite choisir un autre client ou une autre offre juste au-dessus, avant de démarrer.</p></dialog>`;
 
 let authenticated=false,entryBusy=false;
 async function enterStudio(event){
@@ -218,9 +218,63 @@ async function finish(){
   }finally{if(token===generation){busy=false;$('export').disabled=false;$('export').textContent=evaluation?'Télécharger l’entretien et le débriefing':'Télécharger l’entretien sans évaluation';controls();}}
 }
 function sessionExport(){return {version:'pilote-2026-09-16-b',date:new Date().toISOString(),client:selected.name,offre:selectedOffer.name,offreId:selectedOffer.id,retourPilote:{utilite:$('pilotUseful').value,realisme:$('pilotRealism').value,commentaire:$('pilotComment').value},mode:$('engine').value,conversation:history,evaluation,evaluation_status:evaluation?'complete':$('engine').value==='demo'?'not_applicable':busy?'pending':'unavailable',evaluation_indicative:true};}
-function exportSession(){if(busy){notify('Attendez la fin de l’analyse avant de télécharger.',true);return;}const data=sessionExport();const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=`entretien-${selected.id}-${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function reportCats(){const third=selected.id==='marc'?'Objection prix':selected.id==='sophie'?'Clarification du doute':selected.id==='claire'?'Négociation et contreparties':'Concision et pertinence';return [['decouverte','Découverte'],['argumentation','Argumentation'],['objection',third],['ecoute','Écoute active'],['closing','Prochain pas']];}
+function renderReportHTML(data){
+  const cats=reportCats();
+  const dialogueRows=data.conversation.map((m,i)=>`<div class="turn ${m.role}"><span class="who">${m.role==='user'?'Commercial':esc(data.client)}</span><p>${esc(m.content)}</p></div>`).join('');
+  let evalBlock='<p class="muted">Aucune évaluation disponible pour cet entretien.</p>';
+  if(data.evaluation){
+    const ev=data.evaluation;
+    const total=cats.reduce((a,[key])=>a+(ev[key]||0),0);
+    const scoreRows=cats.map(([key,label])=>`<div class="score"><span>${esc(label)}</span><strong>${ev[key]??'-'} / 5</strong></div>`).join('');
+    const list=items=>(items||[]).map(t=>`<li>${esc(t)}</li>`).join('');
+    const detailRows=(ev.details||[]).map(d=>{
+      const label=cats.find(([key])=>key===d.critere)?.[1]||d.critere;
+      const preuves=(d.preuves||[]).map(p=>`<blockquote>Tour ${p.tour} — ${data.conversation[p.tour-1]?.role==='user'?'Commercial':'Client'} : « ${esc(p.citation)} »</blockquote>`).join('');
+      return `<div class="detail"><h4>${esc(label)}</h4><p>${esc(d.constat)}</p>${preuves}<p class="conseil">Pour progresser : ${esc(d.conseil)}</p></div>`;
+    }).join('');
+    const limites=ev.limites_simulation?.length?`<h3>Limites du client virtuel à prendre en compte</h3><ul>${list(ev.limites_simulation)}</ul>`:'';
+    evalBlock=`<h2>Débriefing · ${total} / 25</h2><p class="verdict">${esc(ev.verdict)}</p><div class="scores">${scoreRows}</div><h3>Ce qui a fonctionné</h3><ul>${list(ev.points_forts)}</ul><h3>À travailler</h3><ul>${list(ev.axes_progres)}</ul>${detailRows}${limites}`;
+  }
+  const retour=data.retourPilote;
+  const retourBlock=(retour.utilite||retour.realisme||retour.commentaire)?`<h3>Retour du testeur</h3><p>Utile : ${esc(retour.utilite||'non renseigné')} · Réaliste : ${esc(retour.realisme||'non renseigné')}</p>${retour.commentaire?`<p>${esc(retour.commentaire)}</p>`:''}`:'';
+  const rawJson=JSON.stringify(data).replace(/</g,'\\u003c');
+  return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Compte-rendu — ${esc(data.client)} · ${esc(data.offre)}</title>
+<style>
+body{font-family:-apple-system,'Segoe UI',sans-serif;max-width:760px;margin:32px auto;padding:0 20px;color:#1c1a17;line-height:1.55;background:#faf8f4;}
+h1{font-size:22px;margin-bottom:2px;} h2{font-size:19px;margin-top:28px;border-top:1px solid #ddd3ba;padding-top:16px;} h3{font-size:15px;margin-top:20px;color:#3d382c;} h4{font-size:14px;margin:16px 0 4px;}
+.meta{color:#6b6455;font-size:14px;margin-bottom:20px;}
+.scores{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:12px 0;}
+.score{background:#fff;border:1px solid #e2d9c2;border-radius:8px;padding:8px 12px;display:flex;justify-content:space-between;font-size:14px;}
+.verdict{font-style:italic;}
+.detail{background:#fff;border:1px solid #e2d9c2;border-radius:10px;padding:12px 16px;margin:10px 0;}
+.detail blockquote{margin:6px 0;padding:6px 10px;background:#f3efe6;border-left:3px solid #c9a24b;font-size:13.5px;}
+.conseil{color:#3d382c;font-weight:600;}
+.turn{margin:8px 0;} .turn .who{font-weight:700;font-size:12px;text-transform:uppercase;color:#6b6455;} .turn p{margin:2px 0 0;}
+.muted{color:#8a8371;}
+.print-btn{background:#16233d;color:#fff;border:none;border-radius:8px;padding:10px 18px;font-size:14px;cursor:pointer;margin-bottom:18px;}
+.print-btn:hover{background:#0e1729;}
+@media print{
+  .no-print{display:none !important;}
+  body{background:#fff;margin:0;}
+  .detail,.score,.turn{page-break-inside:avoid;break-inside:avoid;}
+  a{color:inherit;text-decoration:none;}
+}
+</style></head><body>
+<button class="print-btn no-print" onclick="window.print()">🖨️ Enregistrer en PDF / Imprimer</button>
+<h1>Compte-rendu d'entretien — ${esc(data.client)}</h1>
+<p class="meta">Offre : ${esc(data.offre)} · ${new Date(data.date).toLocaleString('fr-FR')} · Évaluation indicative, à discuter avec le formateur.</p>
+${evalBlock}
+${retourBlock}
+<h2>Transcription complète</h2>
+${dialogueRows}
+<script type="application/json" id="mps-raw-data">${rawJson}<\/script>
+</body></html>`;
+}
+function exportSession(){if(busy){notify('Attendez la fin de l’analyse avant de télécharger.',true);return;}const data=sessionExport();const html=renderReportHTML(data);const url=URL.createObjectURL(new Blob([html],{type:'text/html'}));const a=document.createElement('a');a.href=url;a.download=`entretien-${selected.id}-${new Date().toISOString().slice(0,10)}.html`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 $('start').onclick=start;$('reset').onclick=()=>{if(!history.some(m=>m.role==='user')||confirm('Recommencer et effacer cet entretien ?'))resetSession();};$('restart').onclick=resetSession;
-$('finish').onclick=finish;$('retryEval').onclick=finish;$('closeResults').onclick=()=>$('results').close();$('export').onclick=exportSession;
+$('finish').onclick=finish;$('retryEval').onclick=finish;$('closeResults').onclick=resetSession;$('export').onclick=exportSession;
 $('composer').onsubmit=e=>{e.preventDefault();send();};$('input').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();send();}};
 $('mic').onclick=()=>{if(recognizing){recognition.stop();}else startListening();};$('interrupt').onclick=()=>{cancelVoice();state('idle','À vous de parler');scheduleListening();};
 $('voice').onchange=()=>{if(!$('voice').checked){cancelVoice();scheduleListening();}};
