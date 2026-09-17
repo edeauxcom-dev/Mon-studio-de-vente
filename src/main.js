@@ -220,6 +220,15 @@ async function finish(){
 function sessionExport(){return {version:'pilote-2026-09-16-b',date:new Date().toISOString(),client:selected.name,offre:selectedOffer.name,offreId:selectedOffer.id,retourPilote:{utilite:$('pilotUseful').value,realisme:$('pilotRealism').value,commentaire:$('pilotComment').value},mode:$('engine').value,conversation:history,evaluation,evaluation_status:evaluation?'complete':$('engine').value==='demo'?'not_applicable':busy?'pending':'unavailable',evaluation_indicative:true};}
 function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function reportCats(){const third=selected.id==='marc'?'Objection prix':selected.id==='sophie'?'Clarification du doute':selected.id==='claire'?'Négociation et contreparties':'Concision et pertinence';return [['decouverte','Découverte'],['argumentation','Argumentation'],['objection',third],['ecoute','Écoute active'],['closing','Prochain pas']];}
+// À personnaliser par formateur/CFA : nom et email affichés sur le bouton d'envoi du compte rendu.
+const FORMATEURS=[
+  {nom:'Grégory',email:'greg.greco83@gmail.com'},
+  {nom:'Jérémy',email:'Jmoranfpa@outlook.fr'},
+  {nom:'Sébastien',email:'3s2a.formation@gmail.com'},
+  {nom:'Fares',email:'atbafares@gmail.com'},
+  {nom:'Sandra',email:'sandra.biela94@gmail.com'},
+  {nom:'Stéphanie',email:'stephanie.d@mypartner-school.fr'}
+];
 function renderReportHTML(data){
   const cats=reportCats();
   const dialogueRows=data.conversation.map((m,i)=>`<div class="turn ${m.role}"><span class="who">${m.role==='user'?'Commercial':esc(data.client)}</span><p>${esc(m.content)}</p></div>`).join('');
@@ -240,21 +249,32 @@ function renderReportHTML(data){
   const retour=data.retourPilote;
   const retourBlock=(retour.utilite||retour.realisme||retour.commentaire)?`<h3>Retour du testeur</h3><p>Utile : ${esc(retour.utilite||'non renseigné')} · Réaliste : ${esc(retour.realisme||'non renseigné')}</p>${retour.commentaire?`<p>${esc(retour.commentaire)}</p>`:''}`:'';
   const rawJson=JSON.stringify(data).replace(/</g,'\\u003c');
+  const mailBodyTemplate=`Bonjour,\n\nVoici mon compte rendu d'entretien (${data.client} · ${data.offre}).\nMerci de joindre le fichier téléchargé à ce mail avant envoi — un lien mailto ne peut pas joindre de fichier automatiquement.\n\nCordialement`;
+  const mailSubject=encodeURIComponent('Compte rendu MyLAB Vente — '+data.client);
+  const formateurOptions=FORMATEURS.map((f,i)=>`<option value="${i}">${esc(f.nom)}</option>`).join('');
+  const formateurData=FORMATEURS.map(f=>({nom:f.nom,email:f.email})).map(f=>JSON.stringify(f)).join(',');
   return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Compte-rendu — ${esc(data.client)} · ${esc(data.offre)}</title>
 <style>
-body{font-family:-apple-system,'Segoe UI',sans-serif;max-width:760px;margin:32px auto;padding:0 20px;color:#1c1a17;line-height:1.55;background:#faf8f4;}
-h1{font-size:22px;margin-bottom:2px;} h2{font-size:19px;margin-top:28px;border-top:1px solid #ddd3ba;padding-top:16px;} h3{font-size:15px;margin-top:20px;color:#3d382c;} h4{font-size:14px;margin:16px 0 4px;}
-.meta{color:#6b6455;font-size:14px;margin-bottom:20px;}
+:root{--brand:#0e71b8;--muted:#5f7084;--line:#dbe4ef;--ink:#172d45;}
+body{font-family:'DM Sans',-apple-system,'Segoe UI',sans-serif;max-width:760px;margin:32px auto;padding:0 20px;color:var(--ink);line-height:1.55;background:#f5f8fc;}
+h1{font-family:Manrope,sans-serif;font-size:22px;margin-bottom:2px;color:var(--ink);}
+h2{font-family:Manrope,sans-serif;font-size:19px;margin-top:28px;border-top:1px solid var(--line);padding-top:16px;}
+h3{font-size:15px;margin-top:20px;color:#285c84;} h4{font-size:14px;margin:16px 0 4px;}
+.meta{color:var(--muted);font-size:14px;margin-bottom:20px;}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:22px;}
+.btn{display:inline-flex;align-items:center;gap:6px;border-radius:8px;padding:10px 18px;font-size:14px;cursor:pointer;text-decoration:none;border:none;font-family:inherit;}
+.btn-primary{background:var(--brand);color:#fff;}
+.btn-primary:hover{background:#0a5a93;}
+.btn-outline{background:#fff;color:var(--brand);border:1px solid var(--brand);}
+.btn-outline:hover{background:#eaf4fc;}
 .scores{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:12px 0;}
-.score{background:#fff;border:1px solid #e2d9c2;border-radius:8px;padding:8px 12px;display:flex;justify-content:space-between;font-size:14px;}
-.verdict{font-style:italic;}
-.detail{background:#fff;border:1px solid #e2d9c2;border-radius:10px;padding:12px 16px;margin:10px 0;}
-.detail blockquote{margin:6px 0;padding:6px 10px;background:#f3efe6;border-left:3px solid #c9a24b;font-size:13.5px;}
-.conseil{color:#3d382c;font-weight:600;}
-.turn{margin:8px 0;} .turn .who{font-weight:700;font-size:12px;text-transform:uppercase;color:#6b6455;} .turn p{margin:2px 0 0;}
-.muted{color:#8a8371;}
-.print-btn{background:#16233d;color:#fff;border:none;border-radius:8px;padding:10px 18px;font-size:14px;cursor:pointer;margin-bottom:18px;}
-.print-btn:hover{background:#0e1729;}
+.score{background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 12px;display:flex;justify-content:space-between;font-size:14px;}
+.verdict{font-style:italic;color:var(--ink);}
+.detail{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin:10px 0;}
+.detail blockquote{margin:6px 0;padding:6px 10px;background:#eaf4fc;border-left:3px solid var(--brand);font-size:13.5px;}
+.conseil{color:var(--ink);font-weight:600;}
+.turn{margin:8px 0;} .turn .who{font-weight:700;font-size:12px;text-transform:uppercase;color:var(--muted);} .turn p{margin:2px 0 0;}
+.muted{color:var(--muted);}
 @media print{
   .no-print{display:none !important;}
   body{background:#fff;margin:0;}
@@ -262,7 +282,20 @@ h1{font-size:22px;margin-bottom:2px;} h2{font-size:19px;margin-top:28px;border-t
   a{color:inherit;text-decoration:none;}
 }
 </style></head><body>
-<button class="print-btn no-print" onclick="window.print()">🖨️ Enregistrer en PDF / Imprimer</button>
+<div class="actions no-print">
+<button class="btn btn-primary" onclick="window.print()">🖨️ Enregistrer en PDF / Imprimer</button>
+<select id="formateurSelect" class="btn-outline">${formateurOptions}</select>
+<button class="btn btn-outline" onclick="sendToFormateur()">✉️ Envoyer au formateur</button>
+</div>
+<script>
+const MPS_FORMATEURS=[${formateurData}];
+function sendToFormateur(){
+  const f=MPS_FORMATEURS[document.getElementById('formateurSelect').value];
+  const body=${JSON.stringify(mailBodyTemplate)};
+  const href='mailto:'+encodeURIComponent(f.email)+'?subject='+${JSON.stringify(mailSubject)}+'&body='+encodeURIComponent(body);
+  window.location.href=href;
+}
+<\/script>
 <h1>Compte-rendu d'entretien — ${esc(data.client)}</h1>
 <p class="meta">Offre : ${esc(data.offre)} · ${new Date(data.date).toLocaleString('fr-FR')} · Évaluation indicative, à discuter avec le formateur.</p>
 ${evalBlock}
