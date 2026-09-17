@@ -211,7 +211,7 @@ async function finish(){
     feedbackSection('Ce qui a fonctionné',evaluation.points_forts);feedbackSection('À travailler',evaluation.axes_progres);
     for(const detail of evaluation.details||[]){
       const label=cats.find(([key])=>key===detail.critere)?.[1]||detail.critere;
-      feedbackSection(label+' · Pourquoi cette note ?',[detail.constat,...detail.preuves.map(p=>`Tour ${p.tour} — ${history[p.tour-1]?.role==='user'?'Commercial':'Client'} : « ${p.citation} »`),'Pour progresser : '+detail.conseil]);
+      feedbackSection(label+' · Pourquoi cette note ?',[...(detail.reac?['Compétence REAC : '+detail.reac]:[]),detail.constat,...detail.preuves.map(p=>`Tour ${p.tour} — ${history[p.tour-1]?.role==='user'?'Commercial':'Client'} : « ${p.citation} »`),'Pour progresser : '+detail.conseil]);
     }
     if(evaluation.limites_simulation?.length)feedbackSection('Limites du client virtuel à prendre en compte',evaluation.limites_simulation);
   }catch(e){if(token!==generation)return;$('resultTitle').textContent='Analyse indisponible';$('resultNote').textContent=e.message;$('retryEval').hidden=false;
@@ -241,7 +241,8 @@ function renderReportHTML(data){
     const detailRows=(ev.details||[]).map(d=>{
       const label=cats.find(([key])=>key===d.critere)?.[1]||d.critere;
       const preuves=(d.preuves||[]).map(p=>`<blockquote>Tour ${p.tour} — ${data.conversation[p.tour-1]?.role==='user'?'Commercial':'Client'} : « ${esc(p.citation)} »</blockquote>`).join('');
-      return `<div class="detail"><h4>${esc(label)}</h4><p>${esc(d.constat)}</p>${preuves}<p class="conseil">Pour progresser : ${esc(d.conseil)}</p></div>`;
+      const reacLine=d.reac?`<p class="reac-ref">Compétence REAC : ${esc(d.reac)}</p>`:'';
+      return `<div class="detail"><h4>${esc(label)}</h4>${reacLine}<p>${esc(d.constat)}</p>${preuves}<p class="conseil">Pour progresser : ${esc(d.conseil)}</p></div>`;
     }).join('');
     const limites=ev.limites_simulation?.length?`<h3>Limites du client virtuel à prendre en compte</h3><ul>${list(ev.limites_simulation)}</ul>`:'';
     evalBlock=`<h2>Débriefing · ${total} / 25</h2><p class="verdict">${esc(ev.verdict)}</p><div class="scores">${scoreRows}</div><h3>Ce qui a fonctionné</h3><ul>${list(ev.points_forts)}</ul><h3>À travailler</h3><ul>${list(ev.axes_progres)}</ul>${detailRows}${limites}`;
@@ -273,6 +274,7 @@ h3{font-size:15px;margin-top:20px;color:#285c84;} h4{font-size:14px;margin:16px 
 .detail{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin:10px 0;}
 .detail blockquote{margin:6px 0;padding:6px 10px;background:#eaf4fc;border-left:3px solid var(--brand);font-size:13.5px;}
 .conseil{color:var(--ink);font-weight:600;}
+.reac-ref{color:var(--brand);font-size:12.5px;font-style:italic;margin:4px 0 8px;}
 .turn{margin:8px 0;} .turn .who{font-weight:700;font-size:12px;text-transform:uppercase;color:var(--muted);} .turn p{margin:2px 0 0;}
 .muted{color:var(--muted);}
 @media print{
