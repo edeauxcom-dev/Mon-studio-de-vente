@@ -98,21 +98,34 @@ export function parseResult(raw, action) {
   if (typeof data.verdict !== 'string' || !Array.isArray(data.points_forts) || !Array.isArray(data.axes_progres)) throw new Error('Évaluation incomplète.');
   const extra={};
   if(data.details!==undefined){
-    if(!Array.isArray(data.details)||data.details.length!==5)throw Error('Justifications incomplètes.');
+    if(!Array.isArray(data.details)||data.details.length!==5)throw Error('CF_DETAILS_INCOMPLETE');
     const keys=criteriaFor('marc').map(([key])=>key);
-    if(new Set(data.details.map(d=>d?.critere)).size!==5)throw Error('Justifications incomplètes.');
+    if(new Set(data.details.map(d=>d?.critere)).size!==5)throw Error('CF_DETAILS_INCOMPLETE');
     extra.details=data.details.map(d=>{
-      if(!keys.includes(d?.critere)||typeof d.constat!=='string'||!d.constat.trim()||typeof d.conseil!=='string'||!d.conseil.trim()||!Array.isArray(d.preuves))throw Error('Justifications incomplètes.');
-      if(d.preuves.some(p=>!Number.isInteger(p?.tour)||p.tour<1||typeof p.citation!=='string'||!p.citation.trim()))throw Error('Preuve invalide.');
+      if(!keys.includes(d?.critere)||typeof d.constat!=='string'||!d.constat.trim()||typeof d.conseil!=='string'||!d.conseil.trim()||!Array.isArray(d.preuves))throw Error('CF_DETAILS_INCOMPLETE');
+      if(d.preuves.some(p=>!Number.isInteger(p?.tour)||p.tour<1||typeof p.citation!=='string'||!p.citation.trim()))throw Error('CF_DETAILS_INCOMPLETE');
       return {critere:d.critere,constat:d.constat.slice(0,2000),conseil:d.conseil.slice(0,2000),preuves:d.preuves.slice(0,3)};
     });
   }
   if(Array.isArray(data.limites_simulation))extra.limites_simulation=data.limites_simulation.filter(x=>typeof x==='string').slice(0,5);
   return { ...Object.fromEntries(criteriaFor('marc').map(([key]) => [key,data[key]])), verdict: data.verdict.slice(0,3000), points_forts: data.points_forts.filter(x=>typeof x==='string').slice(0,5), axes_progres: data.axes_progres.filter(x=>typeof x==='string').slice(0,5),...extra };
 }
+// Normalise apostrophes/guillemets typographiques avant comparaison : le modèle recopie parfois
+// une citation en remplaçant ' par ' (ou " par «»), ce qui casse une comparaison caractère pour caractère
+// alors que la citation est en réalité fidèle au dialogue.
+function normalizeForMatch(s){
+  return String(s??'')
+    .normalize('NFKC')
+    .replace(/[\u2018\u2019\u02BC]/g,"'")
+    .replace(/[\u201C\u201D«»]/g,'"')
+    .replace(/\s+/g,' ')
+    .trim();
+}
 export function verifyEvidence(result,messages){
   for(const d of result.details||[])for(const p of d.preuves){
-    if(!messages[p.tour-1]?.content.includes(p.citation))throw Error('Citation non retrouvée dans cet entretien.');
+    const source=normalizeForMatch(messages[p.tour-1]?.content);
+    const cited=normalizeForMatch(p.citation);
+    if(!source.includes(cited))throw Error('CF_CITATION_MISMATCH');
   }
   for(const d of result.details||[]){
     if(d.preuves.length&&d.preuves.every(p=>messages[p.tour-1]?.role==='assistant'))throw Error('CF_EVALUATION_UNSUPPORTED');
@@ -204,8 +217,8 @@ export async function handle(request, env, fetcher = fetch) {
   } catch (e) {
     if(provider==='cloudflare') {
       const message=String(e?.message||'');
-      const code=aiStage==='response'?(['CF_OUTPUT_MISSING','CF_OUTPUT_TRUNCATED','CF_EVALUATION_UNSUPPORTED'].includes(message)?message:'CF_RESPONSE_INVALID'):/quota|neurons|daily limit/i.test(message)?'CF_QUOTA':/rate limit|too many requests|429/i.test(message)?'CF_RATE_LIMIT':/template|alternat|role|validation|schema|400|invalid input/i.test(message)?'CF_INPUT_REJECTED':/not found|unknown model|5018/i.test(message)?'CF_MODEL_UNAVAILABLE':'CF_REQUEST_FAILED';
-      const descriptions={CF_RESPONSE_INVALID:'Le modèle a répondu, mais sa réponse est incomplète ou dans un format illisible.',CF_QUOTA:'Cloudflare signale une limite de consommation atteinte.',CF_RATE_LIMIT:'Cloudflare limite temporairement la fréquence des demandes.',CF_INPUT_REJECTED:'Cloudflare refuse le format de la demande envoyée au modèle.',CF_MODEL_UNAVAILABLE:'Cloudflare ne trouve pas le modèle demandé.',CF_REQUEST_FAILED:'L’appel au modèle Cloudflare a échoué ; la cause exacte reste à confirmer.'};
+      const code=aiStage==='response'?(['CF_OUTPUT_MISSING','CF_OUTPUT_TRUNCATED','CF_EVALUATION_UNSUPPORTED','CF_CITATION_MISMATCH','CF_DETAILS_INCOMPLETE'].includes(message)?message:'CF_RESPONSE_INVALID'):/quota|neurons|daily limit/i.test(message)?'CF_QUOTA':/rate limit|too many requests|429/i.test(message)?'CF_RATE_LIMIT':/template|alternat|role|validation|schema|400|invalid input/i.test(message)?'CF_INPUT_REJECTED':/not found|unknown model|5018/i.test(message)?'CF_MODEL_UNAVAILABLE':'CF_REQUEST_FAILED';
+      const descriptions={CF_RESPONSE_INVALID:'Le modèle a répondu, mais sa réponse est incomplète ou dans un format illisible.',CF_QUOTA:'Cloudflare signale une limite de consommation atteinte.',CF_RATE_LIMIT:'Cloudflare limite temporairement la fréquence des demandes.',CF_INPUT_REJECTED:'Cloudflare refuse le format de la demande envoyée au modèle.',CF_MODEL_UNAVAILABLE:'Cloudflare ne trouve pas le modèle demandé.',CF_REQUEST_FAILED:'L’appel au modèle Cloudflare a échoué ; la cause exacte reste à confirmer.',CF_CITATION_MISMATCH:'Le modèle a cité une phrase qui ne correspond à aucun message de cet entretien.',CF_DETAILS_INCOMPLETE:'Le modèle n’a pas justifié tous les critères de façon complète.'};
       descriptions.CF_OUTPUT_MISSING='Cloudflare a renvoyé un résultat sans texte exploitable.';
       descriptions.CF_EVALUATION_UNSUPPORTED='Le débriefing contient un jugement mal étayé. Aucune note n’est affichée ; vous pouvez réessayer l’analyse ou transmettre l’entretien à votre formateur.';
       descriptions.CF_OUTPUT_TRUNCATED='La réponse du modèle a été coupée avant sa fin.';
